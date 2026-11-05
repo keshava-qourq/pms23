@@ -2,6 +2,664 @@
 openapi: 3.1.0
 info:
   title: PMS23
-  version: architecture-v0
+  version: architecture-v1
   description: Designed API from the approved architecture (not extracted from code).
-paths: {}
+paths:
+  /analytics:
+    get:
+      summary: Executive read-only org-level analytics (cycle completion, ratings/goal
+        aggregates).
+      description: Executive read-only org-level analytics (cycle completion, ratings/goal
+        aggregates).
+      operationId: get_analytics
+      parameters: []
+      responses:
+        '200':
+          description: '{metrics}'
+      security:
+      - bearerAuth: []
+  /audit-log:
+    get:
+      summary: View who changed what and when for records and reporting lines.
+      description: View who changed what and when for records and reporting lines.
+      operationId: get_audit_log
+      parameters: []
+      responses:
+        '200':
+          description: '{entries[]}'
+      security:
+      - bearerAuth: []
+  /auth/login:
+    post:
+      summary: Authenticate with email/password; returns JWT and role. Generic error
+        on failure.
+      description: Authenticate with email/password; returns JWT and role. Generic
+        error on failure.
+      operationId: post_auth_login
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              description: '{email, password}'
+      responses:
+        '200':
+          description: '{access_token, role}'
+  /auth/logout:
+    post:
+      summary: End the current session.
+      description: End the current session.
+      operationId: post_auth_logout
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              description: '{}'
+      responses:
+        '200':
+          description: '204'
+      security:
+      - bearerAuth: []
+  /auth/password-reset/confirm:
+    post:
+      summary: Set a new password with a valid, unused, unexpired token.
+      description: Set a new password with a valid, unused, unexpired token.
+      operationId: post_auth_password_reset_confirm
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              description: '{token, new_password}'
+      responses:
+        '200':
+          description: 200 or 400 rejected
+  /auth/password-reset/request:
+    post:
+      summary: Send a time-limited reset link to a registered email.
+      description: Send a time-limited reset link to a registered email.
+      operationId: post_auth_password_reset_request
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              description: '{email}'
+      responses:
+        '200':
+          description: 202 accepted
+  /dashboard/me:
+    get:
+      summary: Personal goal dashboard with progress, due dates and flags; cached
+        aggregate.
+      description: Personal goal dashboard with progress, due dates and flags; cached
+        aggregate.
+      operationId: get_dashboard_me
+      parameters: []
+      responses:
+        '200':
+          description: '{summary, goals[]}'
+      security:
+      - bearerAuth: []
+  /dashboard/team:
+    get:
+      summary: Manager team view of direct reports' goals and progress; cached aggregate.
+      description: Manager team view of direct reports' goals and progress; cached
+        aggregate.
+      operationId: get_dashboard_team
+      parameters: []
+      responses:
+        '200':
+          description: '{reports[]}'
+      security:
+      - bearerAuth: []
+  /employees:
+    post:
+      summary: HR admin creates an employee record (name, email, role).
+      description: HR admin creates an employee record (name, email, role).
+      operationId: post_employees
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              description: '{name, email, role}'
+      responses:
+        '200':
+          description: '{employee}'
+      security:
+      - bearerAuth: []
+  /employees/{id}:
+    put:
+      summary: HR admin edits an employee record.
+      description: HR admin edits an employee record.
+      operationId: put_employees_id
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              description: '{name?, email?, role?}'
+      responses:
+        '200':
+          description: '{employee}'
+      security:
+      - bearerAuth: []
+  /employees/{id}/deactivate:
+    post:
+      summary: Deactivate an employee so they can no longer log in while keeping history.
+      description: Deactivate an employee so they can no longer log in while keeping
+        history.
+      operationId: post_employees_id_deactivate
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              description: '{}'
+      responses:
+        '200':
+          description: '{employee}'
+      security:
+      - bearerAuth: []
+  /employees/{id}/export:
+    get:
+      summary: Export an individual's personal and performance data to a file.
+      description: Export an individual's personal and performance data to a file.
+      operationId: get_employees_id_export
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: file (JSON/CSV)
+      security:
+      - bearerAuth: []
+  /employees/{id}/manager:
+    put:
+      summary: Set or reassign an employee's manager, rejecting cycles.
+      description: Set or reassign an employee's manager, rejecting cycles.
+      operationId: put_employees_id_manager
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              description: '{manager_id}'
+      responses:
+        '200':
+          description: '{employee} or 400 cycle'
+      security:
+      - bearerAuth: []
+  /employees/{id}/personal-data:
+    delete:
+      summary: Delete/anonymise identifying data on an approved request; writes audit
+        entry.
+      description: Delete/anonymise identifying data on an approved request; writes
+        audit entry.
+      operationId: delete_employees_id_personal_data
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: '204'
+      security:
+      - bearerAuth: []
+  /goals:
+    get:
+      summary: List goals visible to the caller per role and reporting line.
+      description: List goals visible to the caller per role and reporting line.
+      operationId: get_goals
+      parameters: []
+      responses:
+        '200':
+          description: '{goals[]}'
+      security:
+      - bearerAuth: []
+    post:
+      summary: Create a goal (self or, for managers, a direct report); optional parent
+        objective.
+      description: Create a goal (self or, for managers, a direct report); optional
+        parent objective.
+      operationId: post_goals
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              description: '{title, description, target_metric, due_date, progress_type,
+                owner_id?, parent_objective_id?}'
+      responses:
+        '200':
+          description: '{goal}'
+      security:
+      - bearerAuth: []
+  /goals/{id}:
+    put:
+      summary: Edit a goal's details or link/unlink a parent objective.
+      description: Edit a goal's details or link/unlink a parent objective.
+      operationId: put_goals_id
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              description: '{title?, description?, target_metric?, due_date?, parent_objective_id?}'
+      responses:
+        '200':
+          description: '{goal}'
+      security:
+      - bearerAuth: []
+  /goals/{id}/check-ins:
+    get:
+      summary: List a goal's check-ins in chronological order.
+      description: List a goal's check-ins in chronological order.
+      operationId: get_goals_id_check_ins
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: '{check_ins[]}'
+      security:
+      - bearerAuth: []
+    post:
+      summary: Add a dated check-in note to a goal.
+      description: Add a dated check-in note to a goal.
+      operationId: post_goals_id_check_ins
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              description: '{note}'
+      responses:
+        '200':
+          description: '{check_in}'
+      security:
+      - bearerAuth: []
+  /goals/{id}/progress:
+    patch:
+      summary: Update progress by percentage (0-100) or status; marks complete at
+        100%/Completed.
+      description: Update progress by percentage (0-100) or status; marks complete
+        at 100%/Completed.
+      operationId: patch_goals_id_progress
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              description: '{progress_percent?, status?}'
+      responses:
+        '200':
+          description: '{goal}'
+      security:
+      - bearerAuth: []
+  /notifications:
+    get:
+      summary: List the caller's in-app notifications.
+      description: List the caller's in-app notifications.
+      operationId: get_notifications
+      parameters: []
+      responses:
+        '200':
+          description: '{notifications[]}'
+      security:
+      - bearerAuth: []
+  /notifications/{id}/read:
+    patch:
+      summary: Mark/dismiss an in-app notification as read.
+      description: Mark/dismiss an in-app notification as read.
+      operationId: patch_notifications_id_read
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              description: '{}'
+      responses:
+        '200':
+          description: '204'
+      security:
+      - bearerAuth: []
+  /objectives:
+    get:
+      summary: List higher-level objectives available to cascade from.
+      description: List higher-level objectives available to cascade from.
+      operationId: get_objectives
+      parameters: []
+      responses:
+        '200':
+          description: '{objectives[]}'
+      security:
+      - bearerAuth: []
+  /praise:
+    post:
+      summary: Send a praise note naming a recipient and message; notifies recipient
+        in-app.
+      description: Send a praise note naming a recipient and message; notifies recipient
+        in-app.
+      operationId: post_praise
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              description: '{recipient_id, message}'
+      responses:
+        '200':
+          description: '{praise}'
+      security:
+      - bearerAuth: []
+  /praise/received:
+    get:
+      summary: List praise received by the caller, most recent first.
+      description: List praise received by the caller, most recent first.
+      operationId: get_praise_received
+      parameters: []
+      responses:
+        '200':
+          description: '{praise[]}'
+      security:
+      - bearerAuth: []
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+  schemas:
+    users:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        email:
+          type: string
+        password_hash:
+          type: string
+        role:
+          type: string
+        manager_id:
+          type: string
+          format: uuid
+        is_active:
+          type: boolean
+        anonymised_at:
+          type: string
+          format: date-time
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+      required:
+      - id
+      - name
+      - email
+      - role
+      - is_active
+      - created_at
+      - updated_at
+    objectives:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        description:
+          type: string
+        level:
+          type: string
+        owner_id:
+          type: string
+          format: uuid
+        created_at:
+          type: string
+          format: date-time
+      required:
+      - id
+      - title
+      - level
+      - created_at
+    goals:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        owner_id:
+          type: string
+          format: uuid
+        created_by:
+          type: string
+          format: uuid
+        parent_objective_id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        description:
+          type: string
+        target_metric:
+          type: string
+        progress_type:
+          type: string
+        progress_percent:
+          type: integer
+        status:
+          type: string
+        check_in_interval_days:
+          type: integer
+        due_date:
+          type: string
+          format: date
+        completed_at:
+          type: string
+          format: date-time
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+      required:
+      - id
+      - owner_id
+      - created_by
+      - title
+      - progress_type
+      - due_date
+      - created_at
+      - updated_at
+    check_ins:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        goal_id:
+          type: string
+          format: uuid
+        author_id:
+          type: string
+          format: uuid
+        note:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+      required:
+      - id
+      - goal_id
+      - author_id
+      - note
+      - created_at
+    praise:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        sender_id:
+          type: string
+          format: uuid
+        recipient_id:
+          type: string
+          format: uuid
+        message:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+      required:
+      - id
+      - sender_id
+      - recipient_id
+      - message
+      - created_at
+    notifications:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        user_id:
+          type: string
+          format: uuid
+        type:
+          type: string
+        message:
+          type: string
+        is_read:
+          type: boolean
+        email_status:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+      required:
+      - id
+      - user_id
+      - type
+      - message
+      - is_read
+      - created_at
+    password_reset_tokens:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        user_id:
+          type: string
+          format: uuid
+        token_hash:
+          type: string
+        expires_at:
+          type: string
+          format: date-time
+        used_at:
+          type: string
+          format: date-time
+        created_at:
+          type: string
+          format: date-time
+      required:
+      - id
+      - user_id
+      - token_hash
+      - expires_at
+      - created_at
+    audit_log:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        actor_id:
+          type: string
+          format: uuid
+        entity_type:
+          type: string
+        entity_id:
+          type: string
+          format: uuid
+        action:
+          type: string
+        changes:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+      required:
+      - id
+      - entity_type
+      - action
+      - created_at
