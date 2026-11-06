@@ -18,7 +18,6 @@ interface LoginUser {
 
 interface LoginResponse {
   access_token: string;
-  token_type: string;
   user: LoginUser;
   home_route: string;
 }
@@ -178,11 +177,6 @@ export default function Screen() {
           >
             {phase === "loading" ? "Checking credentials…" : "Sign in"}
           </button>
-          <p className="text-xs leading-relaxed" style={{ color: brand.neutralColor }}>
-            PMS23 shows only what your role permits: your own goals as an employee, your reporting
-            line as a manager, the whole organisation as HR admin, read-only analytics as an
-            executive.
-          </p>
         </form>
 
         <p className="mt-8 text-xs uppercase" style={label}>

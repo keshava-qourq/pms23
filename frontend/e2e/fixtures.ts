@@ -7,7 +7,9 @@
 // calling it from more than one spec file is safe.
 import { execFileSync } from "node:child_process";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const BACKEND_DIR = path.resolve(__dirname, "..", "..", "backend");
 const PYTHON = path.join(BACKEND_DIR, ".venv", "bin", "python");
 const SEED_SCRIPT = path.join(BACKEND_DIR, "tests", "e2e_seed.py");
