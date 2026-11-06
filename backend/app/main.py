@@ -15,6 +15,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app import models  # noqa: F401 -- imported so the tables register before create_all
 from app.database import Base, engine
+from app.routers import ALL_ROUTERS
 from app.services import configured_services
 
 
@@ -53,6 +54,10 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+for _router in ALL_ROUTERS:
+    app.include_router(_router)
 
 
 @app.get("/health")
