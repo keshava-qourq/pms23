@@ -31,7 +31,12 @@ describe("Login", () => {
         JSON.stringify({
           access_token: "tok-123",
           token_type: "bearer",
-          user: { id: "u-1", name: "Nadia Okonkwo", email: "nadia@pms23.internal", role: "employee" },
+          user: {
+            id: "u-1",
+            name: "Nadia Okonkwo",
+            email: "nadia@pms23.internal",
+            role: "employee",
+          },
           home_route: "/dashboard",
         }),
         { status: 200 },
@@ -79,10 +84,7 @@ describe("Login", () => {
     const pending = new Promise<Response>((resolve) => {
       resolveFetch = resolve;
     });
-    vi.stubGlobal(
-      "fetch",
-      vi.fn().mockReturnValue(pending),
-    );
+    vi.stubGlobal("fetch", vi.fn().mockReturnValue(pending));
 
     render(
       <MemoryRouter initialEntries={["/login"]}>

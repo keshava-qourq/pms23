@@ -50,7 +50,10 @@ function ErrorAlert({ label, message }: { label: string; message: string }) {
         color: brand.primaryColor,
       }}
     >
-      <span className="mr-2 text-xs uppercase tracking-[0.18em]" style={{ color: brand.accentColor }}>
+      <span
+        className="mr-2 text-xs uppercase tracking-[0.18em]"
+        style={{ color: brand.accentColor }}
+      >
         {label}
       </span>
       {message}

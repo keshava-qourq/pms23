@@ -29,9 +29,24 @@ from app.security import hash_password  # noqa: E402
 E2E_PASSWORD = "Str0ng!PassE2E"
 
 E2E_USERS = [
-    {"email": "e2e.employee@example.com", "name": "E2E Employee", "role": "employee", "is_active": True},
-    {"email": "e2e.manager@example.com", "name": "E2E Manager", "role": "manager", "is_active": True},
-    {"email": "e2e.hradmin@example.com", "name": "E2E HR Admin", "role": "hr_admin", "is_active": True},
+    {
+        "email": "e2e.employee@example.com",
+        "name": "E2E Employee",
+        "role": "employee",
+        "is_active": True,
+    },
+    {
+        "email": "e2e.manager@example.com",
+        "name": "E2E Manager",
+        "role": "manager",
+        "is_active": True,
+    },
+    {
+        "email": "e2e.hradmin@example.com",
+        "name": "E2E HR Admin",
+        "role": "hr_admin",
+        "is_active": True,
+    },
     {
         "email": "e2e.executive@example.com",
         "name": "E2E Executive",
@@ -54,11 +69,7 @@ def main() -> None:
     try:
         with Session(engine) as session:
             for spec in E2E_USERS:
-                user = (
-                    session.query(models.User)
-                    .filter(models.User.email == spec["email"])
-                    .first()
-                )
+                user = session.query(models.User).filter(models.User.email == spec["email"]).first()
                 if user is None:
                     user = models.User(
                         email=spec["email"],
