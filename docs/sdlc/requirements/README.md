@@ -5,92 +5,182 @@
 <!-- sdlc:auto:start narrative -->
 ## Summary
 
-### REQ-SCOPE · draft · source: requirements:scope-summary
+### REQ-SCOPE-001 · draft · source: requirements:scope
 
-Defines the lightweight delivery scope for requirements version 1: what PMS23 will and will not build in this release.
+Defines PMS23 as a lightweight-delivery, v2 requirements set covering goal management, employee/reporting-line admin, and praise/recognition for an internal performance management tool.
 
-In scope: goal creation with SMART/OKR structure; goal progress tracking by percentage or status; goal due dates and periodic check-ins; personal dashboard of an employee's own goals; manual employee records and reporting-line entry by HR; praise and recognition notes. Out of scope (explicitly excluded from design/build): native mobile apps (iOS/Android); payroll/compensation processing; learning/training management; recruitment/ATS; HRIS or SSO directory integration in the first release.
+Delivery scope: lightweight. Requirements version: 2. Capabilities explicitly in scope: goal creation with SMART/OKR structure, goal progress tracking by percentage or status, goal due dates and periodic check-ins, personal dashboard of an employee's own goals, manual employee records and reporting-line entry by HR, praise and recognition notes. Explicitly out of scope for this release: native mobile apps (iOS/Android); payroll/compensation processing; learning/training management; recruitment/ATS; HRIS or SSO directory integration.
 
-### REQ-TECHSTACK · approved · source: requirements:technology-stack
+### REQ-TECHSTACK-001 · approved · source: requirements:tech-stack
 
-Product owner approved an exact technology stack and three runtime services; no substitutions are permitted.
+Product owner approved an exact technology stack: FastAPI backend, AWS cloud, PostgreSQL 16 database, React 19 frontend.
 
-Stack: Backend FastAPI 0.115 (chosen for clear expression of RBAC, configurable review cycles, cascading goals and audit trail with built-in request validation); Cloud AWS (dependable hosting, backups, access controls, single-jurisdiction data residency, managed PostgreSQL); Database PostgreSQL 16 (highly relational HR/goal data, reliable aggregate queries for dashboards, row-level control and auditability); Frontend React 19 (four interaction-heavy surfaces: goal trackers, multi-step review forms, feedback threads, analytics dashboards). Runtime services: SendGrid (SaaS email, env var SENDGRID_API_KEY) for deadline/reminder emails; Redis (container redis:7-alpine) used both as a background job queue for batched/scheduled reminders and as a cache for analytics dashboard aggregates. Required API keys/env vars: REDIS_URL, SENDGRID_API_KEY.
+Backend: FastAPI 0.115 — chosen to express role-based access rules, configurable review cycles, cascading goals and audit trail clearly, with built-in request validation for configurable forms/permission checks. Cloud: AWS — chosen for dependable hosting, backups, access controls and single-jurisdiction data residency for sensitive internal HR data, with managed PostgreSQL and room to grow. Database: PostgreSQL 16 — chosen for enforcing highly relational data (employees, reporting lines, cascaded goals, cycles, forms, ratings, feedback), reliable aggregate queries for analytics dashboards, and row-level control/auditability. Frontend: React 19 — chosen for the four interaction-heavy surfaces (goal trackers, multi-step review forms, feedback threads, analytics dashboards) and for developer availability under a tight deadline. Stack to be designed against exactly as specified, no substitutions.
 
-### REQ-EPIC-001 · draft · source: requirements:EPIC-001
+### REQ-SERVICES-001 · approved · source: requirements:services
 
-Foundation epic: email/password login and four-role (employee, manager, HR admin, executive) role-based access control, underpinning every other capability.
+Product owner approved three runtime services: SendGrid for transactional email, Redis as a background job queue, and Redis as a dashboard cache.
 
-US-001 (critical) Email/password login: correct credentials authenticate and route to a role-appropriate home screen (AC-001); incorrect password or unknown email is denied with one generic error that doesn't reveal which field was wrong (AC-002); logging out ends the session and requires re-login (AC-003). US-002 (critical) Role-based access: employees cannot open another employee's goals/praise (AC-004); managers see their own and their direct reports' records only, not others outside their line (AC-005); executives get read-only analytics access and cannot edit individual records (AC-006); HR admins can view and manage records org-wide (AC-007). US-003 (medium) Password reset: a time-limited reset link is emailed on request (AC-008); setting a new password via a valid, unexpired link updates the account (AC-009); an expired or already-used link is rejected with a prompt to request a new one (AC-010).
+Email: SendGrid (SaaS, env var SENDGRID_API_KEY) — drives deadline/check-in/feedback/sign-off email reminders. Queue: Redis (container redis:7-alpine, used as a queue) — runs batched, time-based reminder jobs as background work rather than blocking the app. Cache: Redis (container redis:7-alpine) — caches executive/HR analytics dashboard aggregates (goals, ratings, cycle completion) for performance during busy appraisal periods. Required API keys/env vars for the app: REDIS_URL, SENDGRID_API_KEY.
 
-**Related:** US-001, US-002, US-003, AC-001, AC-002, AC-003, AC-004, AC-005, AC-006, AC-007, AC-008, AC-009, AC-010, NFR-001, NFR-002, NFR-003
+**Related:** US-012, US-013, US-014
 
-- ⚠ ASSUMPTION (unverified): the four roles -- employee, manager, HR admin, executive/leadership read-only -- are assumed from confirmed understanding, not independently verified.
-- ⚠ ASSUMPTION (unverified): email/password authentication only -- no SSO or HRIS directory sync in the first release.
-- ⚠ ASSUMPTION (unverified): no payment, billing or subscription functionality exists; intentionally out of scope for this internal tool.
+- ⚠ Email reminders (US-012) depend on SENDGRID_API_KEY being provisioned before go-live; provisioning status not stated in this input.
 
-### REQ-EPIC-002 · draft · source: requirements:EPIC-002
+### US-001 · draft · source: requirements:US-001
 
-HR admins manually create and maintain employee records and the reporting-line structure, with export/delete/audit-trail handling of personal data, since there is no HRIS/SSO sync in this release.
+Critical story: any registered user logs in with email/password and is taken to a role-appropriate home screen; incorrect credentials show a generic error; logout ends the session.
 
-US-004 (critical) HR creates/maintains employee records: creating a record with name, email, role saves it and enables goal/reporting-line assignment (AC-011); edits to details are stored and reflected app-wide (AC-012); deactivating a departed employee blocks login while retaining historical goals/praise for reporting (AC-013). US-005 (critical) Reporting lines: assigning a manager makes the employee a direct report (AC-014); reassigning updates the line and removes the previous manager's access (AC-015); an assignment that would create a reporting cycle is blocked with an error (AC-016). US-006 (medium) Data protection: export produces a file of an individual's personal and performance data (AC-017); approved deletion removes/anonymises identifying data and is recorded in the audit trail (AC-018); the audit trail shows who changed what and when for record/reporting-line changes (AC-019).
+Priority: critical. Epic: EPIC-001 Access, Authentication & RBAC. AC-001: correct credentials authenticate and route to role-appropriate home screen. AC-002: incorrect password or unknown email is denied with a generic error that does not reveal which field was wrong. AC-003: logout ends the session, requiring re-login. Epic-level assumptions: four roles (employee, manager, HR admin, executive/leadership read-only analytics) assumed, not independently verified; email/password authentication only, no SSO or HRIS directory sync in first release; no payment/billing/subscription functionality exists (internal single-org tool).
 
-**Related:** US-004, US-005, US-006, AC-011, AC-012, AC-013, AC-014, AC-015, AC-016, AC-017, AC-018, AC-019, NFR-004, NFR-005
+**Related:** EPIC-001, US-002, US-003, US-017
 
-- ⚠ ASSUMPTION (unverified): performance/employee data is treated as sensitive HR data under a single jurisdiction with GDPR-style practices (access control, retention, export/delete on request) and an audit trail, because the operating region was not specified.
+- ⚠ Four-role model is an epic-level assumption, not independently verified by the product owner.
+- ⚠ Email/password-only authentication (no SSO/HRIS sync) is an assumption for the first release, not a confirmed decision.
 
-### REQ-EPIC-003 · draft · source: requirements:EPIC-003
+### US-002 · draft · source: requirements:US-002
 
-Employees and managers create SMART/OKR-style goals, optionally cascaded from higher-level manager or company objectives.
+Critical story: role-based access ensures employees see only their own data, managers see their reporting line, executives get read-only analytics, and HR admins see and manage org-wide records.
 
-US-007 (critical) Create a goal: a goal with title, description, measurable target and due date is saved and linked to its creator (AC-020); a missing required field (e.g. title, due date) blocks saving and prompts completion (AC-021); existing goal details can be edited (AC-022). US-008 (high) Manager sets goals for direct reports: a manager-created goal assigned to a direct report appears on that report's list attributed to them (AC-023); assigning to someone outside the manager's reporting line is not permitted (AC-024). US-009 (medium) Optional cascading: linking a goal to a manager/company objective shows the parent objective on the goal (AC-025); a goal left unlinked still saves as a valid standalone goal (AC-026).
+Priority: critical. Epic: EPIC-001. AC-004: employee is denied access to another employee's goals/praise detail. AC-005: manager sees own records plus direct reports, not employees outside their reporting line. AC-006: executive/leadership has read-only analytics-level access, cannot edit individual employee records or goals. AC-007: HR admin can view and manage records across the organisation.
 
-**Related:** US-007, US-008, US-009, AC-020, AC-021, AC-022, AC-023, AC-024, AC-025, AC-026
+**Related:** EPIC-001, US-001, US-004, US-005, US-013, US-014
 
-- ⚠ ASSUMPTION (unverified): a SMART/OKR-style structure (specific, measurable, with target and timeframe) is assumed from confirmed understanding; cascading is optional, not mandatory.
+### US-003 · draft · source: requirements:US-003
 
-### REQ-EPIC-004 · draft · source: requirements:EPIC-004
+Medium-priority story: users can reset a forgotten password via a time-limited email link without contacting IT.
 
-Goal owners keep goals current via percentage or status progress, dated check-in notes, and email/in-app reminders for due dates and overdue check-ins.
+Priority: medium. Epic: EPIC-001. AC-008: requesting a reset for a registered email sends a time-limited reset link. AC-009: setting a new password via a valid, unexpired link that meets password rules updates the password and allows login. AC-010: an expired or already-used reset link is rejected and the user is prompted to request a new one.
 
-US-010 (high) Update progress: percentage-based goals accept a value 0-100 (AC-027); status-based goals accept values such as Not started/In progress/Completed/Blocked (AC-028); reaching 100% or Completed marks the goal complete and records a completion date (AC-029). US-011 (medium) Check-ins: a dated, authored check-in note is saved and shown in the goal's check-in history (AC-030); multiple check-ins display in chronological order (AC-031). US-012 (medium) Reminders: when a due date nears or a check-in is overdue, the reminder schedule sends an email and in-app notification (AC-032); if the email credential is not configured, the in-app notification is still created and the email failure is logged (AC-033); unread in-app notifications can be viewed and dismissed (AC-034).
+**Related:** EPIC-001, US-001
 
-**Related:** US-010, US-011, US-012, AC-027, AC-028, AC-029, AC-030, AC-031, AC-032, AC-033, AC-034, NFR-007
+- ⚠ "Password rules" referenced in AC-009 are not defined in this input (e.g. minimum length/complexity).
 
-- ⚠ ASSUMPTION (unverified): progress may be expressed as percentage or status, with a configurable per-goal check-in cadence.
-- ⚠ ASSUMPTION (unverified): email reminders require a provisioned email-sending credential (e.g. SendGrid/SMTP API key); in-app notifications are provided regardless.
+### US-017 · draft · source: requirements:US-017
 
-### REQ-EPIC-005 · draft · source: requirements:EPIC-005
+Low-priority UI cleanup story: remove the role-permission explanatory paragraph from the sign-in form while keeping all other sign-in elements unchanged.
 
-Employees get a personal dashboard of their own goals; managers get a team view of direct reports' goals, both constrained by role-based access.
+Priority: low. Epic: EPIC-001. AC-044: the paragraph with class "description" containing the text "PMS23 shows only what your role permits..." is removed from the sign-in form. AC-045: email field, password field, submit button and forgot-password link remain unchanged in behaviour and position after the text is removed.
 
-US-013 (high) Personal dashboard: shows the employee's goals with progress and due dates (AC-035); overdue or soon-due goals are highlighted (AC-036); an empty state invites goal creation when none exist (AC-037). US-014 (medium) Manager team view: shows each direct report's goals and progress (AC-038); attempting to view an employee outside the manager's reporting line is denied (AC-039).
+**Related:** EPIC-001, US-001
 
-**Related:** US-013, US-014, AC-035, AC-036, AC-037, AC-038, AC-039, NFR-001, NFR-008
+### US-004 · draft · source: requirements:US-004
 
-### REQ-EPIC-006 · draft · source: requirements:EPIC-006
+Critical story: HR admins manually create, edit and deactivate employee records since there is no HRIS integration.
 
-Lightweight continuous recognition: any user can send a praise note to a colleague, and employees can view praise they have received.
+Priority: critical. Epic: EPIC-002 Employee Records & Reporting-Line Management. AC-011: creating a record with name, email, role saves it and enables goal/reporting-line assignment. AC-012: editing details (name, email, role) updates and reflects across the app. AC-013: deactivating a departed employee's record blocks their login while preserving historical goals/praise for reporting. Epic assumption: performance/employee data treated as sensitive HR data; GDPR-style practices (access control, retention, export/delete, audit trail) assumed for an unspecified single jurisdiction.
 
-US-015 (medium) Send praise: a note naming a recipient and message is saved and the recipient is notified in-app (AC-040); an empty recipient or message blocks saving and prompts completion (AC-041). US-016 (low) View praise received: notes display with message and sender, most recent first (AC-042); an empty state is shown when no praise has been received (AC-043). Peer/360 feedback, 1:1 notes and structured reviews are explicitly out of scope for this MVP.
+**Related:** EPIC-002, US-005, US-006
 
-**Related:** US-015, US-016, AC-040, AC-041, AC-042, AC-043
+### US-005 · draft · source: requirements:US-005
 
-### REQ-NFR-SET · draft · source: requirements:non-functional-requirements
+Critical story: HR admins assign managers and build the reporting-line structure that drives manager visibility and access control.
 
-Ten non-functional requirements covering security, compliance, privacy, availability, performance, scalability and device compatibility for the whole system.
+Priority: critical. Epic: EPIC-002. AC-014: setting an employee's manager makes them a direct report of that manager. AC-015: reassigning to a different manager updates the reporting line and revokes the previous manager's access to that employee's data. AC-016: an assignment that would create a reporting cycle (e.g. A reports to B and B reports to A) is prevented with an error.
 
-NFR-001 (security) role-based access restricts data visibility by role, denying out-of-role access -- applies to US-002, US-008, US-013, US-014, US-016. NFR-002 (security) login failures show one generic, non-revealing error -- US-001. NFR-003 (security) password reset links are time-limited and single-use -- US-003. NFR-004 (security) audit trail records who changed employee records/reporting lines and when -- US-005, US-006. NFR-005 (compliance) GDPR-style export/delete-or-anonymise on request, retaining historical goals/praise for reporting -- US-006. NFR-006 (privacy) single-jurisdiction data residency for sensitive HR data -- whole system. NFR-007 (availability) in-app notifications still fire and email failures are logged if the email credential/service fails -- US-012. NFR-008 (performance) dashboards/team views stay responsive via cached aggregates during the appraisal period -- US-013, US-014. NFR-009 (scalability) supports a mid-size organisation, target ~200-1000 employees -- whole system. NFR-010 (compatibility) responsive, mobile-friendly web app across common devices/browsers, no native apps -- whole system.
+**Related:** EPIC-002, US-004, US-002
 
-**Related:** US-002, US-008, US-013, US-014, US-016, US-001, US-003, US-005, US-006, US-012
+### US-006 · draft · source: requirements:US-006
 
-- ⚠ NFR-005/NFR-006 GDPR-style compliance and single-jurisdiction residency are both based on an unverified assumption (region unspecified) -- needs confirmation of actual operating jurisdiction and applicable data-protection regime before architecture/design relies on it.
+Medium-priority story: HR admins can export or delete an individual's personal data and view an audit trail of record changes for data-protection compliance.
+
+Priority: medium. Epic: EPIC-002. AC-017: requesting an export produces a file with the person's personal and performance data. AC-018: an approved deletion request removes/anonymises identifying data and is recorded in the audit trail. AC-019: the audit trail shows who changed employee records or reporting lines, and when. Assumption: GDPR-style retention/export/delete is assumed because the organisation's region was not specified.
+
+**Related:** EPIC-002, US-004, US-005
+
+- ⚠ Jurisdiction/regulatory regime (e.g. GDPR applicability) is assumed, not confirmed — region unspecified.
+- ⚠ No specific data-retention period is defined for historical goals/praise kept after deactivation or deletion.
+
+### US-007 · draft · source: requirements:US-007
+
+Critical story: an employee creates a SMART/OKR-style goal with title, description, measurable target and due date.
+
+Priority: critical. Epic: EPIC-003 Goal Setting (SMART/OKR). AC-020: a goal with title, description, measurable target/metric and due date is saved and linked to the creating employee. AC-021: omitting a required field (e.g. title, due date) blocks saving and prompts completion. AC-022: editing title, description, target or due date saves the changes. Epic assumption: SMART/OKR-style structure (specific, measurable, target, timeframe) assumed from confirmed understanding; cascading from higher objectives is optional, not mandatory.
+
+**Related:** EPIC-003, US-008, US-009
+
+### US-008 · draft · source: requirements:US-008
+
+High-priority story: managers create or assign goals to their direct reports, restricted to their own reporting line.
+
+Priority: high. Epic: EPIC-003. AC-023: a goal created and assigned to a direct report appears on that report's goal list, attributed to them. AC-024: attempting to assign a goal to someone who is not a direct report is not permitted.
+
+**Related:** EPIC-003, US-005, US-007
+
+### US-009 · draft · source: requirements:US-009
+
+Medium-priority story: employees or managers can optionally link a goal to a higher-level manager or company objective to show contribution, but linking is not required.
+
+Priority: medium. Epic: EPIC-003. AC-025: linking a goal to an existing higher-level objective shows that parent objective on the goal. AC-026: choosing not to link a goal still saves it as a valid standalone goal.
+
+**Related:** EPIC-003, US-007, US-008
+
+- ⚠ Who creates/owns the higher-level manager or company objectives being linked to is not specified in this input.
+
+### US-010 · draft · source: requirements:US-010
+
+High-priority story: goal owners update progress as a percentage (0-100) or a status value, with completion recorded when done.
+
+Priority: high. Epic: EPIC-004 Goal Progress Tracking, Due Dates & Check-ins. AC-027: setting percentage-based completion between 0 and 100 is saved and displayed. AC-028: changing status (e.g. Not started, In progress, Completed, Blocked) is saved and displayed. AC-029: reaching 100% or Completed status marks the goal complete and records a completion date.
+
+**Related:** EPIC-004, US-007, US-013
+
+### US-011 · draft · source: requirements:US-011
+
+Medium-priority story: goal owners add dated check-in notes to maintain an ongoing progress/blocker record, shown in chronological order.
+
+Priority: medium. Epic: EPIC-004. AC-030: a check-in note is saved with its date and author and appears in the goal's check-in history. AC-031: multiple check-ins are displayed in chronological order.
+
+**Related:** EPIC-004, US-007
+
+### US-012 · draft · source: requirements:US-012
+
+High-priority story: goal owners receive email and in-app reminders for approaching due dates and overdue check-ins.
+
+Priority: high. Epic: EPIC-004. AC-032: when the reminder schedule runs for an approaching due date or overdue check-in, the owner receives both an email and an in-app notification. AC-033: if the email-sending service credential is not configured, the in-app notification is still created and the email failure is logged. AC-034: unread in-app notifications can be viewed and dismissed. Assumption: email reminders require an email-sending service credential (e.g. SendGrid/SMTP API key) to be provisioned; in-app notifications are provided regardless.
+
+**Related:** EPIC-004, US-010, US-011
+
+- ⚠ Depends on SENDGRID_API_KEY being provisioned (see REQ-SERVICES-001); provisioning status not confirmed in this input.
+- ⚠ Exact reminder schedule/cadence (how long before due date, how often overdue check-ins nudge) is not specified.
+
+### US-013 · draft · source: requirements:US-013
+
+High-priority story: employees see a personal dashboard of their own goals with progress, due dates, and flags for overdue/due-soon items, plus an empty state when no goals exist.
+
+Priority: high. Epic: EPIC-005 Personal Goal Dashboard. AC-035: dashboard shows goals with progress (percentage or status) and due dates. AC-036: overdue or due-soon goals are highlighted/flagged. AC-037: an employee with no goals sees an empty state inviting them to create one.
+
+**Related:** EPIC-005, US-007, US-010
+
+### US-014 · draft · source: requirements:US-014
+
+Medium-priority story: managers view a team view of their direct reports' goals and progress, restricted to their own reporting line.
+
+Priority: medium. Epic: EPIC-005. AC-038: team view shows each direct report's goals and progress. AC-039: attempting to view goals of an employee outside the reporting line is denied.
+
+**Related:** EPIC-005, US-002, US-005
+
+### US-015 · draft · source: requirements:US-015
+
+Medium-priority story: employees or managers send a praise/recognition note naming a recipient and message, with required-field validation.
+
+Priority: medium. Epic: EPIC-006 Praise & Recognition (peer/360 feedback, 1:1 notes and structured reviews are explicitly out of scope for this MVP). AC-040: creating a praise note with a recipient and message saves it and notifies the recipient in-app. AC-041: leaving recipient or message empty blocks saving and prompts completion.
+
+**Related:** EPIC-006, US-016
+
+### US-016 · draft · source: requirements:US-016
+
+Low-priority story: employees view praise they have received, most recent first, with an empty state when none exists.
+
+Priority: low. Epic: EPIC-006. AC-042: praise view shows each received note with message and sender, ordered most recent first. AC-043: an employee with no received praise sees an empty state.
+
+**Related:** EPIC-006, US-015
 <!-- sdlc:auto:end narrative -->
 
 <!-- sdlc:auto:start summary -->
-**Requirements version:** v1  
+**Requirements version:** v2  
 **Delivery scope:** lightweight  
-**Approved:** 2026-11-05
+**Approved:** 2026-11-06
 
 **Capabilities in scope:** Goal creation with SMART/OKR structure, Goal progress tracking by percentage or status, Goal due dates and periodic check-ins, Personal dashboard of an employee's own goals, Manual employee records and reporting-line entry by HR, Praise and recognition notes
 
@@ -145,6 +235,17 @@ Foundation for the internal performance management tool: email/password login an
 | AC-008 | I am on the login page and have forgotten my password | I request a reset for my registered email | a time-limited reset link is sent to that email address |
 | AC-009 | I have received a valid, unexpired reset link | I set a new password meeting the password rules | my password is updated and I can log in with it |
 | AC-010 | I have a reset link that has expired or already been used | I open it | it is rejected and I am prompted to request a new one |
+
+### US-017: Remove role-permission description text from sign-in form
+
+**Priority:** low
+
+> As a user visiting the login page, I want the sign-in form to no longer show the role-permission description paragraph, so that the sign-in screen is cleaner and free of that explanatory text.
+
+| ID | Given | When | Then |
+|---|---|---|---|
+| AC-044 | I am on the login page | the page renders | the paragraph with class "description" containing the text "PMS23 shows only what your role permits..." is not present anywhere on the sign-in form |
+| AC-045 | I am on the login page after the text is removed | I view the form | all other sign-in elements (email field, password field, submit button, forgot-password link) remain unchanged in behaviour and position |
 
 ## EPIC-002: Employee Records & Reporting-Line Management
 

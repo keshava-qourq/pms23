@@ -5,7 +5,7 @@
 <!-- sdlc:auto:start overview -->
 performance management system
 
-**Documentation version:** v7
+**Documentation version:** v8
 <!-- sdlc:auto:end overview -->
 
 ## Contents
@@ -13,7 +13,7 @@ performance management system
 <!-- sdlc:auto:start contents -->
 | Document | State |
 |---|---|
-| [Requirements](requirements/README.md) | v1 approved |
+| [Requirements](requirements/README.md) | v2 approved |
 | [Architecture](architecture/README.md) | 16 entries |
 | [Development](development/README.md) | 11 entries |
 | [Testing](testing/README.md) | 1 entry |
@@ -25,13 +25,13 @@ performance management system
 | [Sprint plan](development/sprint-plan.md) | 5 sprints |
 | [Developer guide](development/developer-guide.md) | generated |
 | [API reference](development/api-reference.md) | 27 routes |
-| [Test report](testing/test-report.md) | not run yet |
+| [Test report](testing/test-report.md) | no_tests |
 | [Tests](testing/test-cases.md) | 116 tests |
 | [Deployment guide](deployment/deployment-guide.md) | not deployed yet |
 | [Runbook](deployment/runbook.md) | not deployed yet |
 | [Release notes](deployment/release-notes.md) | 0 releases |
-| [Traceability matrix](traceability-matrix.md) | 16 requirements |
-| [Changelog](CHANGELOG.md) | 7 versions |
+| [Traceability matrix](traceability-matrix.md) | 17 requirements |
+| [Changelog](CHANGELOG.md) | 8 versions |
 <!-- sdlc:auto:end contents -->
 
 ## Open gaps
@@ -39,14 +39,15 @@ performance management system
 <!-- sdlc:auto:start open-gaps -->
 ### Requirements
 
-- ASSUMPTION (unverified): the four roles -- employee, manager, HR admin, executive/leadership read-only -- are assumed from confirmed understanding, not independently verified.
-- ASSUMPTION (unverified): email/password authentication only -- no SSO or HRIS directory sync in the first release.
-- ASSUMPTION (unverified): no payment, billing or subscription functionality exists; intentionally out of scope for this internal tool.
-- ASSUMPTION (unverified): performance/employee data is treated as sensitive HR data under a single jurisdiction with GDPR-style practices (access control, retention, export/delete on request) and an audit trail, because the operating region was not specified.
-- ASSUMPTION (unverified): a SMART/OKR-style structure (specific, measurable, with target and timeframe) is assumed from confirmed understanding; cascading is optional, not mandatory.
-- ASSUMPTION (unverified): progress may be expressed as percentage or status, with a configurable per-goal check-in cadence.
-- ASSUMPTION (unverified): email reminders require a provisioned email-sending credential (e.g. SendGrid/SMTP API key); in-app notifications are provided regardless.
-- NFR-005/NFR-006 GDPR-style compliance and single-jurisdiction residency are both based on an unverified assumption (region unspecified) -- needs confirmation of actual operating jurisdiction and applicable data-protection regime before architecture/design relies on it.
+- Email reminders (US-012) depend on SENDGRID_API_KEY being provisioned before go-live; provisioning status not stated in this input.
+- Four-role model is an epic-level assumption, not independently verified by the product owner.
+- Email/password-only authentication (no SSO/HRIS sync) is an assumption for the first release, not a confirmed decision.
+- "Password rules" referenced in AC-009 are not defined in this input (e.g. minimum length/complexity).
+- Jurisdiction/regulatory regime (e.g. GDPR applicability) is assumed, not confirmed — region unspecified.
+- No specific data-retention period is defined for historical goals/praise kept after deactivation or deletion.
+- Who creates/owns the higher-level manager or company objectives being linked to is not specified in this input.
+- Depends on SENDGRID_API_KEY being provisioned (see REQ-SERVICES-001); provisioning status not confirmed in this input.
+- Exact reminder schedule/cadence (how long before due date, how often overdue check-ins nudge) is not specified.
 
 ### Architecture
 

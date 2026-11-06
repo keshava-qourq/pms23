@@ -22,7 +22,7 @@ Capacity: 20 points · Committed: 18
 
 Enforce role-based access control, enable password recovery, and ship praise/recognition notes.
 
-Capacity: 20 points · Committed: 16
+Capacity: 20 points · Committed: 17
 
 | Key | Type | Title | Points | Role | Depends on |
 |---|---|---|---|---|---|
@@ -33,6 +33,7 @@ Capacity: 20 points · Committed: 16
 | US-003 | Story | Password reset | 3 | backend-agent | US-001 |
 | US-015 | Story | Give a praise/recognition note | 3 | backend-agent | US-001 |
 | US-016 | Story | View praise received | 2 | frontend-agent | US-015 |
+| US-017 | Story | Remove role-permission description text from sign-in form | 1 | frontend-agent | — |
 
 ## Sprint 3: Sprint 3
 
