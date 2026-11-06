@@ -18,7 +18,6 @@ interface LoginUser {
 
 interface LoginResponse {
   access_token: string;
-  token_type: string;
   user: LoginUser;
   home_route: string;
 }
