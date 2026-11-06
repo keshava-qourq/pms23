@@ -9,11 +9,12 @@ OpenAPI document the frontend is built against already carries the shape
 the approved API spec agreed on.
 """
 
+import re
 import uuid
 from datetime import date, datetime
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 Role = Literal["employee", "manager", "hr_admin", "executive"]
 ProgressType = Literal["percent", "status"]
@@ -59,9 +60,32 @@ class PasswordResetRequest(BaseModel):
     email: str
 
 
+_PASSWORD_MIN_LENGTH = 8
+
+
 class PasswordResetConfirmRequest(BaseModel):
     token: str
     new_password: str
+
+    @field_validator("new_password")
+    @classmethod
+    def _enforce_password_rules(cls, value: str) -> str:
+        """Names the exact rule a weak password breaks, and nothing about
+        the token -- this runs on the field alone, before the handler ever
+        sees the request."""
+        if len(value) < _PASSWORD_MIN_LENGTH:
+            raise ValueError(f"Password must be at least {_PASSWORD_MIN_LENGTH} characters long")
+        if not re.search(r"[A-Z]", value):
+            raise ValueError("Password must contain at least one uppercase letter")
+        if not re.search(r"[a-z]", value):
+            raise ValueError("Password must contain at least one lowercase letter")
+        if not re.search(r"\d", value):
+            raise ValueError("Password must contain at least one digit")
+        return value
+
+
+class PasswordResetAccepted(BaseModel):
+    detail: str
 
 
 # ---- employees (users) --------------------------------------------------------
@@ -193,6 +217,13 @@ class PraiseCreate(BaseModel):
     recipient_id: uuid.UUID
     message: str
 
+    @field_validator("message")
+    @classmethod
+    def _message_not_blank(cls, value: str) -> str:
+        if not value.strip():
+            raise ValueError("Message must not be empty")
+        return value
+
 
 class PraiseRead(BaseModel):
     model_config = ConfigDict(from_attributes=True)
@@ -217,6 +248,38 @@ class NotificationRead(BaseModel):
     is_read: bool
     email_status: str | None = None
     created_at: datetime
+
+
+# ---- dashboard & analytics ----------------------------------------------------
+
+
+class GoalSummary(BaseModel):
+    id: uuid.UUID
+    title: str
+    status: GoalStatus
+    progress_percent: int | None = None
+    due_date: date
+
+
+class DashboardSummary(BaseModel):
+    employee_id: uuid.UUID
+    name: str
+    total_goals: int
+    completed_goals: int
+    average_progress: float
+    goals: list[GoalSummary]
+
+
+class TeamDashboardResponse(BaseModel):
+    reports: list[DashboardSummary]
+
+
+class AnalyticsResponse(BaseModel):
+    total_employees: int
+    total_goals: int
+    completed_goals: int
+    average_progress: float
+    goals_by_status: dict[str, int]
 
 
 # ---- audit log ----------------------------------------------------------------

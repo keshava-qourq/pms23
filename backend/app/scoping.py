@@ -50,3 +50,42 @@ def is_in_reporting_line(db: Session, manager_id: uuid.UUID, employee_id: uuid.U
     directly or transitively, in the reporting line."""
     chain = _ancestor_chain_ids(db, employee_id)
     return manager_id in chain
+
+
+def _descendant_chain_ids(db: Session, start_id: uuid.UUID) -> set[uuid.UUID]:
+    """Every direct and transitive report of `start_id` (not including
+    `start_id` itself), found by walking `manager_id` downward. One bounded
+    recursive query, not a loop over every employee (NFR-009)."""
+    user = models.User
+    base = (
+        select(user.id).where(user.manager_id == start_id).cte("descendant_chain", recursive=True)
+    )
+    walked = base.alias()
+    recursive = select(user.id).join(walked, user.manager_id == walked.c.id)
+    cte = base.union_all(recursive)
+    rows = db.execute(select(cte.c.id)).all()
+    return {row.id for row in rows}
+
+
+def reporting_line_ids(db: Session, manager_id: uuid.UUID) -> set[uuid.UUID]:
+    """`manager_id` plus every direct and transitive report of theirs."""
+    return {manager_id} | _descendant_chain_ids(db, manager_id)
+
+
+def visible_owner_ids(db: Session, user: models.User) -> set[uuid.UUID] | None:
+    """The reusable NFR-001 scoping rule, shared by every router that reads
+    or writes per-owner records (goals today; dashboard, analytics and
+    praise are expected to import this too): the set of user ids `user` may
+    see data for, or `None` meaning "every employee in the organisation"
+    (hr_admin, executive).
+
+    - employee: only themselves.
+    - manager: themselves plus their direct and transitive reports, found by
+      one bounded recursive SQL query (NFR-009), never a per-employee loop.
+    - hr_admin / executive: unrestricted (None).
+    """
+    if user.role in ("hr_admin", "executive"):
+        return None
+    if user.role == "manager":
+        return reporting_line_ids(db, user.id)
+    return {user.id}

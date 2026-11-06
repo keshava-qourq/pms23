@@ -1,5 +1,5 @@
 // @ts-nocheck -- generated from the approved design under its JS runtime contract; not hand-written TypeScript.
-/* eslint-disable @typescript-eslint/no-unused-vars */
+ 
 import React from "react";
 
 import * as UI from "@/lib/ui";
@@ -7,10 +7,28 @@ import { Icons } from "@/lib/icons";
 import { brand } from "@/lib/brand";
 import { useNavigate } from "@/lib/navigate";
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-const { Button, Card, CardHeader, CardTitle, CardDescription, CardContent, Input, Textarea, Label, Select, Table, THead, TBody, TR, TH, TD, Avatar, Tabs, Stat, Empty } = UI;
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-const { Check, Filter } = Icons;
+const {
+  Button,
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardContent,
+  Input,
+  Textarea,
+  Label,
+  Select,
+  Table,
+  THead,
+  TBody,
+  TR,
+  TH,
+  TD,
+  Avatar,
+  Tabs,
+  Stat,
+  Empty,
+} = UI;
 
 const SURFACE = "#1b2722";
 const SURFACE_2 = "#213029";
@@ -23,7 +41,11 @@ const OBJECTIVES = [
   { id: "", title: "No parent objective — standalone goal", meta: "" },
   { id: "OBJ-07", title: "Support experience customers recommend", meta: "Company · FY26" },
   { id: "OBJ-12", title: "Halve time-to-resolution across Tier-1", meta: "Company · FY26" },
-  { id: "OBJ-21", title: "Round-the-clock coverage for Support Ops", meta: "Manager · Dilan Okonkwo" },
+  {
+    id: "OBJ-21",
+    title: "Round-the-clock coverage for Support Ops",
+    meta: "Manager · Dilan Okonkwo",
+  },
   { id: "OBJ-30", title: "Lift CSAT to 4.6 by year end", meta: "Manager · Dilan Okonkwo" },
 ];
 
@@ -103,7 +125,8 @@ const INITIAL_FORM = {
   title: "Cut median first-response time on Tier-1 tickets to under 2 hours",
   description:
     "Rework macros, routing and shift cover so a customer raising a Tier-1 ticket hears back inside two hours, measured across the whole week rather than business hours only.",
-  target_metric: "Median first response ≤ 2h 00m across all Tier-1 tickets, measured weekly (baseline 5h 40m, July 2026)",
+  target_metric:
+    "Median first response ≤ 2h 00m across all Tier-1 tickets, measured weekly (baseline 5h 40m, July 2026)",
   due_date: "2026-12-31",
   check_in_interval_days: "14",
   parent_objective_id: "OBJ-21",
@@ -116,7 +139,20 @@ const personName = (id) => (ALL_PEOPLE.find((p) => p.id === id) || { name: "Unas
 const statusLabel = (v) => (STATUS_OPTIONS.find((s) => s.value === v) || STATUS_OPTIONS[0]).label;
 const prettyDate = (iso) => {
   if (!iso) return "—";
-  const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  const months = [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+    "May",
+    "Jun",
+    "Jul",
+    "Aug",
+    "Sep",
+    "Oct",
+    "Nov",
+    "Dec",
+  ];
   const parts = iso.split("-");
   if (parts.length !== 3) return iso;
   return parts[2].replace(/^0/, "") + " " + months[Number(parts[1]) - 1] + " " + parts[0];
@@ -155,25 +191,30 @@ export default function Screen() {
   };
   React.useEffect(() => {
     const t = setTimeout(() => setPhase("ready"), 620);
+    const activeTimers = timers.current;
     return () => {
       clearTimeout(t);
-      timers.current.forEach(clearTimeout);
+      activeTimers.forEach(clearTimeout);
     };
   }, []);
 
   const assigneeDenied = !DIRECT_REPORT_IDS.includes(form.owner_id);
   const dirty = JSON.stringify(form) !== JSON.stringify(savedForm);
   const progressDirty =
-    progressType === "percent" ? draftPercent !== committedPercent : draftStatus !== committedStatus;
+    progressType === "percent"
+      ? draftPercent !== committedPercent
+      : draftStatus !== committedStatus;
   const willComplete =
-    (progressType === "percent" && draftPercent === 100) || (progressType === "status" && draftStatus === "completed");
-  const currentStatus = progressType === "percent"
-    ? committedPercent === 100
-      ? "completed"
-      : committedPercent === 0
-      ? "not_started"
-      : "in_progress"
-    : committedStatus;
+    (progressType === "percent" && draftPercent === 100) ||
+    (progressType === "status" && draftStatus === "completed");
+  const currentStatus =
+    progressType === "percent"
+      ? committedPercent === 100
+        ? "completed"
+        : committedPercent === 0
+          ? "not_started"
+          : "in_progress"
+      : committedStatus;
 
   const update = (key, value) => {
     setForm((f) => ({ ...f, [key]: value }));
@@ -209,7 +250,14 @@ export default function Screen() {
     later(() => {
       if (progressType === "percent") {
         setHistory((h) => [
-          { id: "p-" + (h.length + 6), date: "5 Nov 2026", from: committedPercent, to: draftPercent, by: "Dilan Okonkwo", fresh: true },
+          {
+            id: "p-" + (h.length + 6),
+            date: "5 Nov 2026",
+            from: committedPercent,
+            to: draftPercent,
+            by: "Dilan Okonkwo",
+            fresh: true,
+          },
           ...h,
         ]);
         setCommittedPercent(draftPercent);
@@ -242,7 +290,7 @@ export default function Screen() {
             note: note.trim(),
             fresh: true,
           },
-        ])
+        ]),
       );
       setNote("");
       setNoteState("saved");
@@ -287,8 +335,16 @@ export default function Screen() {
         style={{
           borderRadius: 999,
           border: "1px solid " + (completed ? brand.accentColor : LINE_STRONG),
-          backgroundColor: completed ? brand.accentColor : value === "in_progress" ? brand.accentColor + "1f" : "transparent",
-          color: completed ? brand.backgroundColor : value === "in_progress" ? brand.accentColor : brand.neutralColor,
+          backgroundColor: completed
+            ? brand.accentColor
+            : value === "in_progress"
+              ? brand.accentColor + "1f"
+              : "transparent",
+          color: completed
+            ? brand.backgroundColor
+            : value === "in_progress"
+              ? brand.accentColor
+              : brand.neutralColor,
           fontFamily: brand.fontBody,
         }}
       >
@@ -302,7 +358,11 @@ export default function Screen() {
   return (
     <div
       className="min-h-full px-6 py-8 lg:px-10"
-      style={{ backgroundColor: brand.backgroundColor, color: brand.primaryColor, fontFamily: brand.fontBody }}
+      style={{
+        backgroundColor: brand.backgroundColor,
+        color: brand.primaryColor,
+        fontFamily: brand.fontBody,
+      }}
     >
       <style>{`
         .v-focus:focus-visible { outline: 2px solid ${brand.accentColor}; outline-offset: 2px; }
@@ -334,7 +394,10 @@ export default function Screen() {
             <p style={labelStyle} className="mb-3">
               Opening goal {GOAL_REF}
             </p>
-            <div className="v-skel h-9 w-3/4 mb-8" style={{ backgroundColor: SURFACE_2, borderRadius: brand.radius }} />
+            <div
+              className="v-skel h-9 w-3/4 mb-8"
+              style={{ backgroundColor: SURFACE_2, borderRadius: brand.radius }}
+            />
             <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_320px]">
               <div className="v-skel h-[420px]" style={{ ...panel }} />
               <div className="v-skel h-[280px]" style={{ ...panel }} />
@@ -360,7 +423,11 @@ export default function Screen() {
                 {statusChip(currentStatus)}
                 <span
                   className="inline-flex items-center gap-2 text-[12px] px-3 py-1"
-                  style={{ border: "1px solid " + LINE, borderRadius: 999, color: brand.neutralColor }}
+                  style={{
+                    border: "1px solid " + LINE,
+                    borderRadius: 999,
+                    color: brand.neutralColor,
+                  }}
                 >
                   <Icons.Clock className="h-3.5 w-3.5" aria-hidden="true" />
                   Check-in due 6 Nov
@@ -368,12 +435,19 @@ export default function Screen() {
                 {dirty || progressDirty ? (
                   <span
                     className="v-enter inline-flex items-center gap-2 text-[12px] px-3 py-1"
-                    style={{ border: "1px dashed " + LINE_STRONG, borderRadius: 999, color: brand.neutralColor }}
+                    style={{
+                      border: "1px dashed " + LINE_STRONG,
+                      borderRadius: 999,
+                      color: brand.neutralColor,
+                    }}
                   >
                     Unsaved edits — not yet sent to the server
                   </span>
                 ) : (
-                  <span className="text-[12px]" style={{ color: brand.neutralColor, fontVariantNumeric: "tabular-nums" }}>
+                  <span
+                    className="text-[12px]"
+                    style={{ color: brand.neutralColor, fontVariantNumeric: "tabular-nums" }}
+                  >
                     Synced {savedAt}
                   </span>
                 )}
@@ -386,13 +460,21 @@ export default function Screen() {
                 {savedForm.title || "Untitled goal"}
               </h1>
 
-              <div className="mt-5 flex flex-wrap items-center gap-x-8 gap-y-3 text-[13px]" style={{ color: brand.neutralColor }}>
+              <div
+                className="mt-5 flex flex-wrap items-center gap-x-8 gap-y-3 text-[13px]"
+                style={{ color: brand.neutralColor }}
+              >
                 <span className="inline-flex items-center gap-2">
                   <Avatar name={personName(savedForm.owner_id)} className="h-7 w-7" />
-                  <span style={{ color: brand.primaryColor }}>{personName(savedForm.owner_id)}</span>
+                  <span style={{ color: brand.primaryColor }}>
+                    {personName(savedForm.owner_id)}
+                  </span>
                   <span>owns this goal</span>
                 </span>
-                <span className="inline-flex items-center gap-2" style={{ fontVariantNumeric: "tabular-nums" }}>
+                <span
+                  className="inline-flex items-center gap-2"
+                  style={{ fontVariantNumeric: "tabular-nums" }}
+                >
                   <Icons.Calendar className="h-4 w-4" aria-hidden="true" />
                   Due {prettyDate(savedForm.due_date)}
                 </span>
@@ -408,17 +490,30 @@ export default function Screen() {
             <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_320px] items-start">
               <div className="min-w-0">
                 {/* ---------------- Progress: the focal panel ---------------- */}
-                <section aria-labelledby="progress-heading" className="p-6 lg:p-8 mb-8" style={panel}>
+                <section
+                  aria-labelledby="progress-heading"
+                  className="p-6 lg:p-8 mb-8"
+                  style={panel}
+                >
                   <div className="flex items-start justify-between gap-6 flex-wrap">
                     <div>
-                      <h2 id="progress-heading" className="text-[24px] leading-tight" style={headingFont}>
+                      <h2
+                        id="progress-heading"
+                        className="text-[24px] leading-tight"
+                        style={headingFont}
+                      >
                         Progress
                       </h2>
                       <p className="mt-1 text-[13px]" style={{ color: brand.neutralColor }}>
                         Track this goal by percentage or by status — one or the other, not both.
                       </p>
                     </div>
-                    <div role="group" aria-label="Progress type" className="flex" style={{ border: "1px solid " + LINE, borderRadius: brand.radius }}>
+                    <div
+                      role="group"
+                      aria-label="Progress type"
+                      className="flex"
+                      style={{ border: "1px solid " + LINE, borderRadius: brand.radius }}
+                    >
                       {[
                         { key: "percent", label: "Percentage" },
                         { key: "status", label: "Status" },
@@ -453,7 +548,12 @@ export default function Screen() {
                         <div className="flex items-end gap-5 flex-wrap">
                           <span
                             className="leading-none"
-                            style={{ ...headingFont, fontSize: 64, color: brand.accentColor, fontVariantNumeric: "tabular-nums" }}
+                            style={{
+                              ...headingFont,
+                              fontSize: 64,
+                              color: brand.accentColor,
+                              fontVariantNumeric: "tabular-nums",
+                            }}
                           >
                             {draftPercent}
                             <span style={{ fontSize: 28 }}>%</span>
@@ -464,7 +564,9 @@ export default function Screen() {
                                 Saved value {committedPercent}% — not yet committed
                               </span>
                             ) : (
-                              <span style={{ fontVariantNumeric: "tabular-nums" }}>Last change 23 Oct 2026, 48% → 62%</span>
+                              <span style={{ fontVariantNumeric: "tabular-nums" }}>
+                                Last change 23 Oct 2026, 48% → 62%
+                              </span>
                             )}
                           </div>
                         </div>
@@ -472,7 +574,10 @@ export default function Screen() {
                         <div className="mt-6 h-[3px] w-full" style={{ backgroundColor: LINE }}>
                           <div
                             className="v-bar h-full"
-                            style={{ width: draftPercent + "%", backgroundColor: brand.accentColor }}
+                            style={{
+                              width: draftPercent + "%",
+                              backgroundColor: brand.accentColor,
+                            }}
                           />
                         </div>
 
@@ -516,14 +621,21 @@ export default function Screen() {
                             />
                           </div>
                         </div>
-                        <p id="progress-hint" className="mt-3 text-[13px]" style={{ color: brand.neutralColor }}>
+                        <p
+                          id="progress-hint"
+                          className="mt-3 text-[13px]"
+                          style={{ color: brand.neutralColor }}
+                        >
                           Any whole number from 0 to 100.
                         </p>
                       </div>
                     ) : (
                       <div>
                         <div className="flex items-center gap-4 flex-wrap">
-                          <span className="leading-none" style={{ ...headingFont, fontSize: 36, color: brand.accentColor }}>
+                          <span
+                            className="leading-none"
+                            style={{ ...headingFont, fontSize: 36, color: brand.accentColor }}
+                          >
                             {statusLabel(draftStatus)}
                           </span>
                           {draftStatus !== committedStatus ? (
@@ -547,7 +659,11 @@ export default function Screen() {
                             }}
                           >
                             {STATUS_OPTIONS.map((s) => (
-                              <option key={s.value} value={s.value} style={{ backgroundColor: SURFACE }}>
+                              <option
+                                key={s.value}
+                                value={s.value}
+                                style={{ backgroundColor: SURFACE }}
+                              >
                                 {s.label}
                               </option>
                             ))}
@@ -560,14 +676,21 @@ export default function Screen() {
                   {willComplete ? (
                     <p
                       className="v-enter mt-6 pl-4 text-[13px]"
-                      style={{ borderLeft: "2px solid " + brand.accentColor, color: brand.primaryColor }}
+                      style={{
+                        borderLeft: "2px solid " + brand.accentColor,
+                        color: brand.primaryColor,
+                      }}
                     >
-                      Saving this marks the goal complete and records 5 Nov 2026 as its completion date.
+                      Saving this marks the goal complete and records 5 Nov 2026 as its completion
+                      date.
                     </p>
                   ) : null}
 
                   {completedAt ? (
-                    <p className="v-enter mt-6 inline-flex items-center gap-2 text-[13px]" style={{ color: brand.accentColor }}>
+                    <p
+                      className="v-enter mt-6 inline-flex items-center gap-2 text-[13px]"
+                      style={{ color: brand.accentColor }}
+                    >
                       <Icons.CheckCircle className="h-4 w-4" aria-hidden="true" />
                       Completed — completion date recorded {completedAt}
                     </p>
@@ -590,7 +713,10 @@ export default function Screen() {
                       {progressState === "saving" ? "Saving progress…" : "Save progress"}
                     </Button>
                     {progressState === "saved" && !progressDirty ? (
-                      <span className="v-enter inline-flex items-center gap-2 text-[13px]" style={{ color: brand.accentColor }}>
+                      <span
+                        className="v-enter inline-flex items-center gap-2 text-[13px]"
+                        style={{ color: brand.accentColor }}
+                      >
                         <Icons.Check className="h-4 w-4" aria-hidden="true" />
                         Progress saved to {GOAL_REF}
                       </span>
@@ -616,12 +742,19 @@ export default function Screen() {
 
                 {tab === "details" ? (
                   <section aria-labelledby="details-heading" className="p-6 lg:p-8" style={panel}>
-                    <h2 id="details-heading" className="text-[24px] leading-tight" style={headingFont}>
+                    <h2
+                      id="details-heading"
+                      className="text-[24px] leading-tight"
+                      style={headingFont}
+                    >
                       SMART fields
                     </h2>
-                    <p className="mt-1 mb-8 text-[13px] max-w-[62ch]" style={{ color: brand.neutralColor }}>
-                      Specific wording, a measurable target and a timeframe. Edits are saved against the goal record and shown
-                      to {personName(form.owner_id)} immediately.
+                    <p
+                      className="mt-1 mb-8 text-[13px] max-w-[62ch]"
+                      style={{ color: brand.neutralColor }}
+                    >
+                      Specific wording, a measurable target and a timeframe. Edits are saved against
+                      the goal record and shown to {personName(form.owner_id)} immediately.
                     </p>
 
                     <form onSubmit={onSaveDetails} noValidate>
@@ -680,8 +813,13 @@ export default function Screen() {
                           onChange={(e) => update("target_metric", e.target.value)}
                           aria-describedby="metric-hint"
                         />
-                        <p id="metric-hint" className="mt-2 text-[13px]" style={{ color: brand.neutralColor }}>
-                          State the number and how it is measured, so progress is not a matter of opinion.
+                        <p
+                          id="metric-hint"
+                          className="mt-2 text-[13px]"
+                          style={{ color: brand.neutralColor }}
+                        >
+                          State the number and how it is measured, so progress is not a matter of
+                          opinion.
                         </p>
                       </div>
 
@@ -743,7 +881,11 @@ export default function Screen() {
                           onChange={(e) => update("parent_objective_id", e.target.value)}
                         >
                           {OBJECTIVES.map((o) => (
-                            <option key={o.id || "none"} value={o.id} style={{ backgroundColor: SURFACE }}>
+                            <option
+                              key={o.id || "none"}
+                              value={o.id}
+                              style={{ backgroundColor: SURFACE }}
+                            >
                               {o.id ? o.id + " — " + o.title + " (" + o.meta + ")" : o.title}
                             </option>
                           ))}
@@ -757,7 +899,10 @@ export default function Screen() {
                         <Select
                           id="goal-owner"
                           className="v-focus mt-3 w-full px-4 py-3 text-[14px]"
-                          style={{ ...fieldStyle, borderColor: assigneeDenied ? brand.accentColor : LINE }}
+                          style={{
+                            ...fieldStyle,
+                            borderColor: assigneeDenied ? brand.accentColor : LINE,
+                          }}
                           value={form.owner_id}
                           onChange={(e) => update("owner_id", e.target.value)}
                           aria-describedby={assigneeDenied ? "assignee-denied" : undefined}
@@ -784,16 +929,31 @@ export default function Screen() {
                           id="assignee-denied"
                           role="status"
                           className="v-enter mt-5 p-5"
-                          style={{ backgroundColor: SURFACE_2, border: "1px solid " + brand.accentColor, borderRadius: brand.radius }}
+                          style={{
+                            backgroundColor: SURFACE_2,
+                            border: "1px solid " + brand.accentColor,
+                            borderRadius: brand.radius,
+                          }}
                         >
-                          <h3 className="text-[16px] inline-flex items-center gap-2" style={headingFont}>
-                            <Icons.AlertCircle className="h-4 w-4" aria-hidden="true" style={{ color: brand.accentColor }} />
+                          <h3
+                            className="text-[16px] inline-flex items-center gap-2"
+                            style={headingFont}
+                          >
+                            <Icons.AlertCircle
+                              className="h-4 w-4"
+                              aria-hidden="true"
+                              style={{ color: brand.accentColor }}
+                            />
                             You can only assign goals inside your reporting line
                           </h3>
-                          <p className="mt-2 text-[13px] leading-[1.6] max-w-[62ch]" style={{ color: brand.neutralColor }}>
-                            {personName(form.owner_id)} does not report to you, so this goal cannot be moved to them. Priya
-                            Raghunathan, Tomás Esquivel, Hanne Lindqvist and Ade Balogun are your direct reports. If the
-                            reporting line is wrong, an HR admin can correct it in People admin.
+                          <p
+                            className="mt-2 text-[13px] leading-[1.6] max-w-[62ch]"
+                            style={{ color: brand.neutralColor }}
+                          >
+                            {personName(form.owner_id)} does not report to you, so this goal cannot
+                            be moved to them. Priya Raghunathan, Tomás Esquivel, Hanne Lindqvist and
+                            Ade Balogun are your direct reports. If the reporting line is wrong, an
+                            HR admin can correct it in People admin.
                           </p>
                           <div className="mt-4 flex flex-wrap gap-3">
                             <Button
@@ -813,7 +973,11 @@ export default function Screen() {
                               type="button"
                               onClick={() => navigate("employees")}
                               className="v-focus px-4 py-2 text-[13px]"
-                              style={{ backgroundColor: "transparent", color: brand.accentColor, borderRadius: brand.radius }}
+                              style={{
+                                backgroundColor: "transparent",
+                                color: brand.accentColor,
+                                borderRadius: brand.radius,
+                              }}
                             >
                               Open People admin
                             </Button>
@@ -857,14 +1021,23 @@ export default function Screen() {
                         >
                           Discard edits
                         </Button>
-                        <span aria-live="polite" className="text-[13px]" style={{ color: brand.neutralColor }}>
+                        <span
+                          aria-live="polite"
+                          className="text-[13px]"
+                          style={{ color: brand.neutralColor }}
+                        >
                           {saveState === "saved" && !dirty ? (
-                            <span className="v-enter inline-flex items-center gap-2" style={{ color: brand.accentColor }}>
+                            <span
+                              className="v-enter inline-flex items-center gap-2"
+                              style={{ color: brand.accentColor }}
+                            >
                               <Icons.Check className="h-4 w-4" aria-hidden="true" />
                               Saved — {GOAL_REF} updated {savedAt}
                             </span>
                           ) : (
-                            <span style={{ fontVariantNumeric: "tabular-nums" }}>Last saved {savedAt} by Dilan Okonkwo</span>
+                            <span style={{ fontVariantNumeric: "tabular-nums" }}>
+                              Last saved {savedAt} by Dilan Okonkwo
+                            </span>
                           )}
                         </span>
                       </div>
@@ -876,7 +1049,11 @@ export default function Screen() {
                   <section aria-labelledby="checkins-heading" className="p-6 lg:p-8" style={panel}>
                     <div className="flex items-start justify-between gap-6 flex-wrap">
                       <div>
-                        <h2 id="checkins-heading" className="text-[24px] leading-tight" style={headingFont}>
+                        <h2
+                          id="checkins-heading"
+                          className="text-[24px] leading-tight"
+                          style={headingFont}
+                        >
                           Check-ins
                         </h2>
                         <p className="mt-1 text-[13px]" style={{ color: brand.neutralColor }}>
@@ -929,7 +1106,11 @@ export default function Screen() {
                       ) : filtered.length === 0 ? (
                         <Empty
                           title={"Nothing matches “" + query.trim() + "”"}
-                          description={"None of the " + checkIns.length + " check-ins on this goal mention that. Try another word, or clear the filter to read the full history."}
+                          description={
+                            "None of the " +
+                            checkIns.length +
+                            " check-ins on this goal mention that. Try another word, or clear the filter to read the full history."
+                          }
                           action={
                             <Button
                               type="button"
@@ -957,7 +1138,10 @@ export default function Screen() {
                               <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
                                 <span
                                   className="text-[12px] tracking-[0.12em]"
-                                  style={{ color: brand.accentColor, fontVariantNumeric: "tabular-nums" }}
+                                  style={{
+                                    color: brand.accentColor,
+                                    fontVariantNumeric: "tabular-nums",
+                                  }}
                                 >
                                   {c.date.toUpperCase()}
                                 </span>
@@ -965,7 +1149,10 @@ export default function Screen() {
                                   {c.author}
                                 </span>
                               </div>
-                              <p className="mt-2 text-[14px] leading-[1.65] max-w-[68ch]" style={{ color: brand.primaryColor }}>
+                              <p
+                                className="mt-2 text-[14px] leading-[1.65] max-w-[68ch]"
+                                style={{ color: brand.primaryColor }}
+                              >
                                 {c.note}
                               </p>
                             </li>
@@ -986,7 +1173,10 @@ export default function Screen() {
                           id="new-checkin"
                           rows={3}
                           className="v-focus mt-3 w-full px-4 py-3 text-[14px] leading-[1.6]"
-                          style={{ ...fieldStyle, borderColor: noteError ? brand.accentColor : LINE }}
+                          style={{
+                            ...fieldStyle,
+                            borderColor: noteError ? brand.accentColor : LINE,
+                          }}
                           value={note}
                           onChange={(e) => {
                             setNote(e.target.value);
@@ -1022,8 +1212,14 @@ export default function Screen() {
                           >
                             {noteState === "saving" ? "Posting…" : "Post check-in"}
                           </Button>
-                          <span aria-live="polite" className="text-[13px]" style={{ color: brand.neutralColor }}>
-                            {noteState === "saved" ? "Check-in posted to the history above." : "Posted notes cannot be edited."}
+                          <span
+                            aria-live="polite"
+                            className="text-[13px]"
+                            style={{ color: brand.neutralColor }}
+                          >
+                            {noteState === "saved"
+                              ? "Check-in posted to the history above."
+                              : "Posted notes cannot be edited."}
                           </span>
                         </div>
                       </form>
@@ -1033,13 +1229,20 @@ export default function Screen() {
 
                 {tab === "history" ? (
                   <section aria-labelledby="history-heading" className="p-6 lg:p-8" style={panel}>
-                    <h2 id="history-heading" className="text-[24px] leading-tight" style={headingFont}>
+                    <h2
+                      id="history-heading"
+                      className="text-[24px] leading-tight"
+                      style={headingFont}
+                    >
                       Progress history
                     </h2>
                     <p className="mt-1 mb-6 text-[13px]" style={{ color: brand.neutralColor }}>
                       Every saved change to this goal's completion figure, newest first.
                     </p>
-                    <Table className="w-full text-[14px]" style={{ fontVariantNumeric: "tabular-nums" }}>
+                    <Table
+                      className="w-full text-[14px]"
+                      style={{ fontVariantNumeric: "tabular-nums" }}
+                    >
                       <THead>
                         <TR style={{ borderBottom: "1px solid " + LINE_STRONG }}>
                           <TH className="text-left py-3" style={labelStyle}>
@@ -1055,8 +1258,15 @@ export default function Screen() {
                       </THead>
                       <TBody>
                         {history.map((h) => (
-                          <TR key={h.id} className={h.fresh ? "v-enter" : ""} style={{ borderBottom: "1px solid " + LINE }}>
-                            <TD className="py-4 pr-6 whitespace-nowrap" style={{ color: brand.neutralColor }}>
+                          <TR
+                            key={h.id}
+                            className={h.fresh ? "v-enter" : ""}
+                            style={{ borderBottom: "1px solid " + LINE }}
+                          >
+                            <TD
+                              className="py-4 pr-6 whitespace-nowrap"
+                              style={{ color: brand.neutralColor }}
+                            >
                               {h.date}
                             </TD>
                             <TD className="py-4 pr-6" style={{ color: brand.primaryColor }}>
@@ -1081,20 +1291,30 @@ export default function Screen() {
                     <CardTitle className="text-[18px]" style={headingFont}>
                       Goal record
                     </CardTitle>
-                    <CardDescription className="text-[13px] mt-1" style={{ color: brand.neutralColor }}>
+                    <CardDescription
+                      className="text-[13px] mt-1"
+                      style={{ color: brand.neutralColor }}
+                    >
                       Reference {GOAL_REF}
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="p-0">
                     <div className="grid grid-cols-2 gap-4">
                       <Stat label="Days remaining" value="56" hint="to 31 Dec 2026" />
-                      <Stat label="Check-in cadence" value={form.check_in_interval_days + "d"} hint="next due 6 Nov" />
+                      <Stat
+                        label="Check-in cadence"
+                        value={form.check_in_interval_days + "d"}
+                        hint="next due 6 Nov"
+                      />
                     </div>
                     <div className="my-5" style={{ borderTop: "1px solid " + LINE }} />
                     <dl className="text-[13px] space-y-4 m-0">
                       <div>
                         <dt style={labelStyle}>Owner</dt>
-                        <dd className="mt-1.5 flex items-center gap-2 m-0" style={{ color: brand.primaryColor }}>
+                        <dd
+                          className="mt-1.5 flex items-center gap-2 m-0"
+                          style={{ color: brand.primaryColor }}
+                        >
                           <Avatar name={personName(form.owner_id)} className="h-6 w-6" />
                           {personName(form.owner_id)}
                         </dd>
@@ -1107,13 +1327,24 @@ export default function Screen() {
                       </div>
                       <div>
                         <dt style={labelStyle}>Parent objective</dt>
-                        <dd className="mt-1.5 m-0 leading-[1.5]" style={{ color: brand.primaryColor }}>
+                        <dd
+                          className="mt-1.5 m-0 leading-[1.5]"
+                          style={{ color: brand.primaryColor }}
+                        >
                           {form.parent_objective_id ? (
                             <React.Fragment>
-                              <span style={{ color: brand.accentColor, fontVariantNumeric: "tabular-nums" }}>
+                              <span
+                                style={{
+                                  color: brand.accentColor,
+                                  fontVariantNumeric: "tabular-nums",
+                                }}
+                              >
                                 {form.parent_objective_id}
                               </span>{" "}
-                              {(OBJECTIVES.find((o) => o.id === form.parent_objective_id) || {}).title}
+                              {
+                                (OBJECTIVES.find((o) => o.id === form.parent_objective_id) || {})
+                                  .title
+                              }
                             </React.Fragment>
                           ) : (
                             "None — valid as a standalone goal"
@@ -1143,7 +1374,10 @@ export default function Screen() {
                         { label: "My goals dashboard", route: "dashboard", icon: Icons.Home },
                         { label: "Send Priya praise", route: "praise", icon: Icons.CheckCircle },
                       ].map((link, i) => (
-                        <li key={link.route} style={{ borderTop: i === 0 ? "none" : "1px solid " + LINE }}>
+                        <li
+                          key={link.route}
+                          style={{ borderTop: i === 0 ? "none" : "1px solid " + LINE }}
+                        >
                           <button
                             type="button"
                             onClick={() => navigate(link.route)}
@@ -1151,10 +1385,18 @@ export default function Screen() {
                             style={{ color: brand.primaryColor, borderRadius: brand.radius }}
                           >
                             <span className="inline-flex items-center gap-3">
-                              <link.icon className="h-4 w-4" aria-hidden="true" style={{ color: brand.neutralColor }} />
+                              <link.icon
+                                className="h-4 w-4"
+                                aria-hidden="true"
+                                style={{ color: brand.neutralColor }}
+                              />
                               {link.label}
                             </span>
-                            <Icons.ChevronRight className="h-4 w-4" aria-hidden="true" style={{ color: brand.neutralColor }} />
+                            <Icons.ChevronRight
+                              className="h-4 w-4"
+                              aria-hidden="true"
+                              style={{ color: brand.neutralColor }}
+                            />
                           </button>
                         </li>
                       ))}
