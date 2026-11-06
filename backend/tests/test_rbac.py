@@ -19,7 +19,7 @@ from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
 from app import models
-from app.security import create_access_token, hash_password
+from app.security import hash_password
 
 PASSWORD = "correct horse battery staple"
 
@@ -88,9 +88,7 @@ def test_ac004_employee_cannot_read_or_write_another_employees_goal(
     goal = _make_goal(db_session, owner=owner)
     token = _login(client, "ac004-other@example.com")
 
-    write = client.put(
-        f"/goals/{goal.id}", headers=_headers(token), json={"title": "Hijacked"}
-    )
+    write = client.put(f"/goals/{goal.id}", headers=_headers(token), json={"title": "Hijacked"})
 
     assert write.status_code == 403
     assert "Hijacked" not in write.text
@@ -105,7 +103,9 @@ def test_ac004_employee_cannot_read_another_employees_check_ins(
     owner = _create_user(db_session, email="ac004b-owner@example.com", role="employee")
     other = _create_user(db_session, email="ac004b-other@example.com", role="employee")
     goal = _make_goal(db_session, owner=owner)
-    check_in = models.CheckIn(goal_id=goal.id, author_id=owner.id, note="confidential progress note")
+    check_in = models.CheckIn(
+        goal_id=goal.id, author_id=owner.id, note="confidential progress note"
+    )
     db_session.add(check_in)
     db_session.commit()
     token = _login(client, "ac004b-other@example.com")
@@ -253,7 +253,7 @@ def test_ac006_executive_cannot_update_goal_progress(
 
 
 def test_ac007_hr_admin_reads_any_employees_goals(client: TestClient, db_session: Session) -> None:
-    hr_admin = _create_user(db_session, email="ac007-hr@example.com", role="hr_admin")
+    _create_user(db_session, email="ac007-hr@example.com", role="hr_admin")
     employee = _create_user(db_session, email="ac007-emp@example.com", role="employee")
     goal = _make_goal(db_session, owner=employee, title="Some employee's goal")
     token = _login(client, "ac007-hr@example.com")
@@ -265,10 +265,8 @@ def test_ac007_hr_admin_reads_any_employees_goals(client: TestClient, db_session
     assert goal.title in titles
 
 
-def test_ac007_hr_admin_updates_any_employees_goal(
-    client: TestClient, db_session: Session
-) -> None:
-    hr_admin = _create_user(db_session, email="ac007b-hr@example.com", role="hr_admin")
+def test_ac007_hr_admin_updates_any_employees_goal(client: TestClient, db_session: Session) -> None:
+    _create_user(db_session, email="ac007b-hr@example.com", role="hr_admin")
     employee = _create_user(db_session, email="ac007b-emp@example.com", role="employee")
     goal = _make_goal(db_session, owner=employee)
     token = _login(client, "ac007b-hr@example.com")
@@ -282,7 +280,7 @@ def test_ac007_hr_admin_updates_any_employees_goal(
 def test_ac007_hr_admin_reads_any_employees_team_dashboard(
     client: TestClient, db_session: Session
 ) -> None:
-    hr_admin = _create_user(db_session, email="ac007c-hr@example.com", role="hr_admin")
+    _create_user(db_session, email="ac007c-hr@example.com", role="hr_admin")
     employee = _create_user(db_session, email="ac007c-emp@example.com", role="employee")
     token = _login(client, "ac007c-hr@example.com")
 
