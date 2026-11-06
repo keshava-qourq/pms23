@@ -99,10 +99,20 @@ def _redis_client() -> "redis.Redis | None":
         return None
 
 
+# In-process fallback, used only when Redis cannot be reached. A denylisted
+# jti still has to make the *next* request on this same process fail even
+# when Redis is down -- "graceful degradation" means the shared, cross-process
+# record is best-effort, not that logout stops working altogether. Redis
+# stays the source of truth whenever it answers.
+_memory_denylist: dict[str, datetime] = {}
+
+
 def denylist_token(jti: str, expires_at: datetime) -> None:
     """Record `jti` as revoked until the token would have expired anyway.
-    Silently does nothing when Redis is unavailable -- graceful degradation,
-    not a login/logout failure."""
+    Falls back to an in-memory record when Redis is unavailable, so logout
+    still takes effect within this process -- graceful degradation, not a
+    login/logout failure."""
+    _memory_denylist[jti] = expires_at
     client = _redis_client()
     if client is None:
         return
@@ -115,12 +125,19 @@ def denylist_token(jti: str, expires_at: datetime) -> None:
 
 def is_token_denylisted(jti: str) -> bool:
     client = _redis_client()
-    if client is None:
+    if client is not None:
+        try:
+            if client.exists(_DENYLIST_PREFIX + jti):
+                return True
+        except Exception:  # noqa: BLE001
+            pass
+    expires_at = _memory_denylist.get(jti)
+    if expires_at is None:
         return False
-    try:
-        return bool(client.exists(_DENYLIST_PREFIX + jti))
-    except Exception:  # noqa: BLE001
+    if expires_at < datetime.now(UTC):
+        del _memory_denylist[jti]
         return False
+    return True
 
 
 def get_token_payload(
