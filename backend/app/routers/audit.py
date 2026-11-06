@@ -40,6 +40,4 @@ async def list_audit_log(
         query = query.filter(
             models.AuditLog.created_at <= datetime.combine(to_date, time.max, tzinfo=UTC)
         )
-    return (
-        query.order_by(models.AuditLog.created_at.desc()).offset(offset).limit(limit).all()
-    )
+    return query.order_by(models.AuditLog.created_at.desc()).offset(offset).limit(limit).all()

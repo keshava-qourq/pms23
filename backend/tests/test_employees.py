@@ -161,7 +161,9 @@ def test_ac013_deactivate_blocks_login(client: TestClient, db_session: Session) 
     assert response.status_code == 200, response.text
     assert response.json()["is_active"] is False
 
-    login = client.post("/auth/login", json={"email": "soon-gone@example.com", "password": PASSWORD})
+    login = client.post(
+        "/auth/login", json={"email": "soon-gone@example.com", "password": PASSWORD}
+    )
     assert login.status_code == 401
 
 
@@ -318,9 +320,7 @@ def test_ac016_rejects_three_node_cycle(client: TestClient, db_session: Session)
 # ============================================================================
 
 
-def test_nfr004_manager_change_produces_audit_row(
-    client: TestClient, db_session: Session
-) -> None:
+def test_nfr004_manager_change_produces_audit_row(client: TestClient, db_session: Session) -> None:
     hr_admin = _create_user(db_session, email="hr-nfr004@example.com", role="hr_admin")
     manager = _create_user(db_session, email="mgr-nfr004@example.com", role="manager")
     employee = _create_user(db_session, email="emp-nfr004@example.com", role="employee")

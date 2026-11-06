@@ -20,8 +20,10 @@ def _ancestor_chain_ids(db: Session, start_id: uuid.UUID) -> set[uuid.UUID]:
     walking `manager_id` upward. Bounded by the chain's depth, not the size
     of the table -- stays cheap at 1,000 employees."""
     user = models.User
-    base = select(user.id, user.manager_id).where(user.id == start_id).cte(
-        "ancestor_chain", recursive=True
+    base = (
+        select(user.id, user.manager_id)
+        .where(user.id == start_id)
+        .cte("ancestor_chain", recursive=True)
     )
     walked = base.alias()
     recursive = select(user.id, user.manager_id).join(walked, user.id == walked.c.manager_id)

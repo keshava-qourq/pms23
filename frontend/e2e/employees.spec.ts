@@ -27,7 +27,10 @@ test.beforeEach(async ({ page }) => {
 
 // AC-011: HR admin creates an employee record.
 test("[AC-011] creates an employee record", async ({ page }) => {
-  await page.getByRole("button", { name: /add employee/i }).first().click();
+  await page
+    .getByRole("button", { name: /add employee/i })
+    .first()
+    .click();
 
   await page.locator("#new-name").fill("Jordan Patel");
   await page.locator("#new-email").fill("jordan.patel@northgate.co");
@@ -39,7 +42,10 @@ test("[AC-011] creates an employee record", async ({ page }) => {
 
 // AC-011: duplicate work email is rejected inline.
 test("[AC-011] duplicate email is rejected with an inline error", async ({ page }) => {
-  await page.getByRole("button", { name: /add employee/i }).first().click();
+  await page
+    .getByRole("button", { name: /add employee/i })
+    .first()
+    .click();
 
   await page.locator("#new-name").fill("Duplicate Person");
   // Seeded record Daniel Achebe already owns this email in the screen's fixture data.
