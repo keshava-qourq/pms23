@@ -88,15 +88,15 @@ Acceptance criteria covered: 22/45 · passing: 7/45
 | — | test_ac_every_protected_endpoint_requires_a_bearer_token[get-/analytics-None] | Unit | Passed | `backend/tests/test_rbac.py` |
 | — | test_ac_every_protected_endpoint_requires_a_bearer_token[get-/dashboard/me-None] | Unit | Passed | `backend/tests/test_rbac.py` |
 | — | test_ac_every_protected_endpoint_requires_a_bearer_token[get-/dashboard/team-None] | Unit | Passed | `backend/tests/test_rbac.py` |
-| — | test_ac_every_protected_endpoint_requires_a_bearer_token[get-/employees/46cc5dff-2f5a-430b-8200-476d3a1b0c6c/reports-None] | Unit | Passed | `backend/tests/test_rbac.py` |
+| — | test_ac_every_protected_endpoint_requires_a_bearer_token[get-/employees/c910a1b5-b664-4a2a-b036-8e2b51a15b01/reports-None] | Unit | Passed | `backend/tests/test_rbac.py` |
 | — | test_ac_every_protected_endpoint_requires_a_bearer_token[get-/goals-None] | Unit | Passed | `backend/tests/test_rbac.py` |
-| — | test_ac_every_protected_endpoint_requires_a_bearer_token[get-/goals/31709cad-3e82-4baa-abac-15c5dc661ce7/check-ins-None] | Unit | Passed | `backend/tests/test_rbac.py` |
+| AC-986 | test_ac_every_protected_endpoint_requires_a_bearer_token[get-/goals/81f8eba2-38b3-41b0-b638-e17b3b6ac986/check-ins-None] | Unit | Passed | `backend/tests/test_rbac.py` |
 | — | test_ac_every_protected_endpoint_requires_a_bearer_token[get-/praise/received-None] | Unit | Passed | `backend/tests/test_rbac.py` |
-| — | test_ac_every_protected_endpoint_requires_a_bearer_token[patch-/goals/32dee048-7947-40da-b58b-db1308f21e2e/progress-json_body3] | Unit | Passed | `backend/tests/test_rbac.py` |
+| — | test_ac_every_protected_endpoint_requires_a_bearer_token[patch-/goals/a70f1803-8741-4b04-998e-833323b35611/progress-json_body3] | Unit | Passed | `backend/tests/test_rbac.py` |
 | — | test_ac_every_protected_endpoint_requires_a_bearer_token[post-/goals-json_body1] | Unit | Passed | `backend/tests/test_rbac.py` |
-| — | test_ac_every_protected_endpoint_requires_a_bearer_token[post-/goals/34a38cc3-4666-4e01-8f9d-8b3af0b790a8/check-ins-json_body4] | Unit | Passed | `backend/tests/test_rbac.py` |
+| — | test_ac_every_protected_endpoint_requires_a_bearer_token[post-/goals/c056c864-dd73-4929-a77d-9f4641a0134e/check-ins-json_body4] | Unit | Passed | `backend/tests/test_rbac.py` |
 | — | test_ac_every_protected_endpoint_requires_a_bearer_token[post-/praise-json_body11] | Unit | Passed | `backend/tests/test_rbac.py` |
-| — | test_ac_every_protected_endpoint_requires_a_bearer_token[put-/goals/727d2a93-0517-4d83-8418-9fad68667a2e-json_body2] | Unit | Passed | `backend/tests/test_rbac.py` |
+| — | test_ac_every_protected_endpoint_requires_a_bearer_token[put-/goals/5d40dafa-d624-4c2f-abe0-221b51842203-json_body2] | Unit | Passed | `backend/tests/test_rbac.py` |
 
 ### US-003: Password reset
 

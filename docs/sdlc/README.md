@@ -5,7 +5,7 @@
 <!-- sdlc:auto:start overview -->
 performance management system
 
-**Documentation version:** v10
+**Documentation version:** v11
 <!-- sdlc:auto:end overview -->
 
 ## Contents
@@ -16,7 +16,7 @@ performance management system
 | [Requirements](requirements/README.md) | v2 approved |
 | [Architecture](architecture/README.md) | 16 entries |
 | [Development](development/README.md) | 9 entries |
-| [Testing](testing/README.md) | 1 entry |
+| [Testing](testing/README.md) | 2 entries |
 | [Deployment](deployment/README.md) | 0 entries |
 | [Maintenance](maintenance/README.md) | 0 entries |
 | [Data model](architecture/data-model.md) | generated |
@@ -31,7 +31,7 @@ performance management system
 | [Runbook](deployment/runbook.md) | not deployed yet |
 | [Release notes](deployment/release-notes.md) | 0 releases |
 | [Traceability matrix](traceability-matrix.md) | 17 requirements |
-| [Changelog](CHANGELOG.md) | 10 versions |
+| [Changelog](CHANGELOG.md) | 11 versions |
 <!-- sdlc:auto:end contents -->
 
 ## Open gaps
@@ -64,9 +64,9 @@ performance management system
 
 ### Testing
 
-- No breakdown of what the 5 checks actually verify -- cannot confirm which functional areas were exercised.
-- No mapping provided between these checks and specific requirement IDs (US-001 through US-016), so requirement-level test coverage cannot be confirmed.
-- No ticket ID associated with this run, so it cannot be traced to a specific plan or development item.
-- No information on test environment, test data, or whether these are unit, integration, or end-to-end checks.
-- No record of any failed/retried runs prior to this success, or of manual/exploratory testing, if any was performed.
+- No ticket is associated with this run, so it cannot be linked to a specific requirement (US-001..US-017).
+- Nature/content of the 5 checks (unit, lint, static analysis, etc.) is not specified in the input.
+- No timestamp beyond today's reporting date was provided for when the run actually occurred.
+- No E2E test cases exist yet for sandbox target, so no functional/requirement-level validation (US-001..US-017) can be confirmed from this run.
+- Unclear whether E2E tests are planned but not yet written, or whether the suite is misconfigured and failing to discover tests.
 <!-- sdlc:auto:end open-gaps -->
