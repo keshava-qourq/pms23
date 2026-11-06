@@ -1,11 +1,13 @@
 """HR admin: employee records, reporting lines, exports and GDPR deletion."""
 
+import secrets
 import uuid
 
 from fastapi import APIRouter, Depends, HTTPException, Response, status
 from sqlalchemy.orm import Session
 
 from app import models
+from app.audit import record_change
 from app.database import get_db
 from app.schemas import (
     EmployeeCreate,
@@ -16,7 +18,7 @@ from app.schemas import (
     StubResponse,
 )
 from app.scoping import is_in_reporting_line, would_create_cycle
-from app.security import get_current_user, require_roles
+from app.security import get_current_user, hash_password, require_roles
 
 router = APIRouter(prefix="/employees", tags=["employees"])
 
@@ -28,19 +30,96 @@ def _get_employee_or_404(db: Session, employee_id: uuid.UUID) -> models.User:
     return employee
 
 
-@router.post("", response_model=StubResponse)
-async def create_employee(payload: EmployeeCreate) -> StubResponse:
-    return StubResponse(endpoint="POST /employees")
+@router.post("", response_model=EmployeeRead, status_code=status.HTTP_201_CREATED)
+async def create_employee(
+    payload: EmployeeCreate,
+    db: Session = Depends(get_db),  # noqa: B008
+    current_user: models.User = Depends(require_roles("hr_admin")),  # noqa: B008
+) -> models.User:
+    existing = db.query(models.User).filter(models.User.email == payload.email).first()
+    if existing is not None:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT, detail="An employee with this email exists"
+        )
+    if payload.manager_id is not None:
+        _get_employee_or_404(db, payload.manager_id)
+
+    employee = models.User(
+        name=payload.name,
+        email=payload.email,
+        role=payload.role,
+        manager_id=payload.manager_id,
+        password_hash=hash_password(secrets.token_urlsafe(24)),
+        is_active=True,
+    )
+    db.add(employee)
+    db.flush()
+    record_change(
+        db,
+        current_user,
+        "employee",
+        employee.id,
+        "created",
+        before=None,
+        after={"name": employee.name, "email": employee.email, "role": employee.role},
+    )
+    db.commit()
+    db.refresh(employee)
+    return employee
 
 
-@router.put("/{id}", response_model=StubResponse)
-async def update_employee(id: str, payload: EmployeeUpdate) -> StubResponse:
-    return StubResponse(endpoint="PUT /employees/{id}")
+@router.put("/{id}", response_model=EmployeeRead)
+async def update_employee(
+    id: uuid.UUID,
+    payload: EmployeeUpdate,
+    db: Session = Depends(get_db),  # noqa: B008
+    current_user: models.User = Depends(require_roles("hr_admin")),  # noqa: B008
+) -> models.User:
+    employee = _get_employee_or_404(db, id)
+
+    if payload.email is not None and payload.email != employee.email:
+        existing = db.query(models.User).filter(models.User.email == payload.email).first()
+        if existing is not None:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT, detail="An employee with this email exists"
+            )
+
+    before = {"name": employee.name, "email": employee.email, "role": employee.role}
+    if payload.name is not None:
+        employee.name = payload.name
+    if payload.email is not None:
+        employee.email = payload.email
+    if payload.role is not None:
+        employee.role = payload.role
+    after = {"name": employee.name, "email": employee.email, "role": employee.role}
+
+    record_change(db, current_user, "employee", employee.id, "updated", before=before, after=after)
+    db.commit()
+    db.refresh(employee)
+    return employee
 
 
-@router.post("/{id}/deactivate", response_model=StubResponse)
-async def deactivate_employee(id: str) -> StubResponse:
-    return StubResponse(endpoint="POST /employees/{id}/deactivate")
+@router.post("/{id}/deactivate", response_model=EmployeeRead)
+async def deactivate_employee(
+    id: uuid.UUID,
+    db: Session = Depends(get_db),  # noqa: B008
+    current_user: models.User = Depends(require_roles("hr_admin")),  # noqa: B008
+) -> models.User:
+    employee = _get_employee_or_404(db, id)
+    before = {"is_active": employee.is_active}
+    employee.is_active = False
+    record_change(
+        db,
+        current_user,
+        "employee",
+        employee.id,
+        "deactivated",
+        before=before,
+        after={"is_active": False},
+    )
+    db.commit()
+    db.refresh(employee)
+    return employee
 
 
 @router.put("/{id}/manager", response_model=EmployeeRead)
