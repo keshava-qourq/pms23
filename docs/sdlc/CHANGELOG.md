@@ -3,6 +3,10 @@
 > Maintained by QuorQ AI SDLC. Text between `sdlc:auto` markers is regenerated; anything outside them is yours and is kept.
 
 <!-- sdlc:auto:start history -->
+## v4 — 2026-11-06
+
+- generated: Regenerated the development phase(s) (model `claude-sonnet-5`, prompt `v7`)
+
 ## v3 — 2026-11-05
 
 - generated: Regenerated the development phase(s) (model `claude-sonnet-5`, prompt `v7`)

@@ -5,7 +5,7 @@
 <!-- sdlc:auto:start overview -->
 performance management system
 
-**Documentation version:** v3
+**Documentation version:** v4
 <!-- sdlc:auto:end overview -->
 
 ## Contents
@@ -15,7 +15,7 @@ performance management system
 |---|---|
 | [Requirements](requirements/README.md) | v1 approved |
 | [Architecture](architecture/README.md) | 16 entries |
-| [Development](development/README.md) | 12 entries |
+| [Development](development/README.md) | 5 entries |
 | [Testing](testing/README.md) | 0 entries |
 | [Deployment](deployment/README.md) | 0 entries |
 | [Maintenance](maintenance/README.md) | 0 entries |
@@ -24,14 +24,14 @@ performance management system
 | [Decisions (ADRs)](architecture/adr/README.md) | 4 decisions |
 | [Sprint plan](development/sprint-plan.md) | 5 sprints |
 | [Developer guide](development/developer-guide.md) | generated |
-| [API reference](development/api-reference.md) | 1 route |
+| [API reference](development/api-reference.md) | 27 routes |
 | [Test report](testing/test-report.md) | not run yet |
-| [Tests](testing/test-cases.md) | 0 tests |
+| [Tests](testing/test-cases.md) | 51 tests |
 | [Deployment guide](deployment/deployment-guide.md) | not deployed yet |
 | [Runbook](deployment/runbook.md) | not deployed yet |
 | [Release notes](deployment/release-notes.md) | 0 releases |
 | [Traceability matrix](traceability-matrix.md) | 16 requirements |
-| [Changelog](CHANGELOG.md) | 3 versions |
+| [Changelog](CHANGELOG.md) | 4 versions |
 <!-- sdlc:auto:end contents -->
 
 ## Open gaps
@@ -56,16 +56,9 @@ performance management system
 
 ### Development
 
-- No development progress, ticket status (in-progress/done), code artifacts, or completion dates were provided for any sprint or item -- only the plan/backlog structure is available.
-- Items carry points and roles but are not explicitly tagged with a sprint number in the input; sprint-to-item associations in this documentation are inferred from each sprint's goal text, not stated directly.
-- US-016 (View praise received) is not mentioned in any sprint goal text, so its sprint assignment is unconfirmed even though it sits under the Praise & Recognition epic alongside US-015 which is named in Sprint 2's goal.
-- Sprint-to-item mapping is inferred from the goal description, not explicitly stated by the input.
-- No record of whether Sprint 1 was executed, partially completed, or carried over.
-- US-016 (View praise received) is thematically related but not named in this sprint's goal -- its sprint is unconfirmed.
-- No record of execution/completion status for this sprint.
-- None of US-004, US-005, US-006 have sub-tasks broken out in the plan, unlike other stories -- unclear if that work is undecomposed or simply not captured.
-- No sub-task breakdown provided for US-007, US-008, or US-009.
-- No sub-task breakdown provided for US-013 or US-014.
-- No sub-task breakdown provided for US-015 or US-016.
-- US-016 is not referenced by name in any sprint goal, so its sprint timing is unconfirmed (see PLAN-001 and SPRINT-2 gaps).
+- No confirmation in the input of which sub-tasks (T1/T2/T3) were individually completed vs. the story as a whole -- only the parent story's delivered status and a single commit were given.
+- No further detail provided on what employee-record fields or validations were implemented -- only story-level delivered status is recorded.
+- US-004 and US-005 share the exact same commit hash; input does not clarify whether this is one combined commit delivering both stories or a data-entry duplication -- flagging for confirmation.
+- Conflict: run status='completed' but 13 of 16 planned stories have no ticket/commit record -- needs confirmation of whether these are still in progress, were deferred, or the status field is inaccurate.
+- No tickets recorded for US-002 (role-based HR data access), US-003 (password reset), US-006 (data protection export/delete/audit), US-007/US-008/US-009 (goal creation/assignment/cascade), US-010/US-011 (progress/check-ins), US-012 and tasks (reminders), US-013/US-014 (dashboards), US-015/US-016 (praise/recognition).
 <!-- sdlc:auto:end open-gaps -->
