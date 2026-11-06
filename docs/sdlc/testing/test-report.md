@@ -23,6 +23,10 @@ Passed: 0 · Failed: 0 · Skipped: 0 · Flaky: 0 · Total: 0
 <!-- sdlc:auto:start dev-checks -->
 ### Sprint 2
 
+_No test steps recorded._
+
+### Sprint 2
+
 | Step | Status | Ticket | Finished |
 |---|---|---|---|
 | run_checks | succeeded | — | 2026-11-06 |
