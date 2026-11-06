@@ -38,6 +38,26 @@ const GENERIC_LOGIN_ERROR =
 type View = "signin" | "reset" | "reset-sent";
 type Phase = "idle" | "loading";
 
+function ErrorAlert({ label, message }: { label: string; message: string }) {
+  return (
+    <p
+      role="alert"
+      className="px-3 py-3 text-sm leading-relaxed"
+      style={{
+        border: HAIRLINE,
+        borderRadius: brand.radius,
+        backgroundColor: "rgba(0,0,0,0.25)",
+        color: brand.primaryColor,
+      }}
+    >
+      <span className="mr-2 text-xs uppercase tracking-[0.18em]" style={{ color: brand.accentColor }}>
+        {label}
+      </span>
+      {message}
+    </p>
+  );
+}
+
 export default function Screen() {
   const navigate = useNavigate();
   const [view, setView] = React.useState<View>("signin");
@@ -148,33 +168,18 @@ export default function Screen() {
         <h1 className="text-3xl" style={{ fontFamily: brand.fontHeading }}>
           {PRODUCT}
         </h1>
-        <div aria-hidden className="mt-3 h-px w-12" style={{ backgroundColor: brand.accentColor }} />
+        <div
+          aria-hidden
+          className="mt-3 h-px w-12"
+          style={{ backgroundColor: brand.accentColor }}
+        />
         <p className="mt-3 text-xs uppercase" style={label}>
           {view === "signin" ? "Sign in" : view === "reset" ? "Reset password" : "Reset link sent"}
         </p>
 
         {view === "signin" ? (
           <form className="vl-enter mt-8 space-y-5" onSubmit={submitSignIn} noValidate>
-            {error ? (
-              <p
-                role="alert"
-                className="px-3 py-3 text-sm leading-relaxed"
-                style={{
-                  border: HAIRLINE,
-                  borderRadius: brand.radius,
-                  backgroundColor: "rgba(0,0,0,0.25)",
-                  color: brand.primaryColor,
-                }}
-              >
-                <span
-                  className="mr-2 text-xs uppercase tracking-[0.18em]"
-                  style={{ color: brand.accentColor }}
-                >
-                  Denied
-                </span>
-                {error}
-              </p>
-            ) : null}
+            {error ? <ErrorAlert label="Denied" message={error} /> : null}
             <div className="space-y-2">
               <label htmlFor="vl-email" className="block text-xs uppercase" style={label}>
                 Work email
@@ -227,26 +232,7 @@ export default function Screen() {
               Give us the email address on your PMS23 record and we will send a reset link that
               works for {RESET_WINDOW}.
             </p>
-            {error ? (
-              <p
-                role="alert"
-                className="px-3 py-3 text-sm leading-relaxed"
-                style={{
-                  border: HAIRLINE,
-                  borderRadius: brand.radius,
-                  backgroundColor: "rgba(0,0,0,0.25)",
-                  color: brand.primaryColor,
-                }}
-              >
-                <span
-                  className="mr-2 text-xs uppercase tracking-[0.18em]"
-                  style={{ color: brand.accentColor }}
-                >
-                  Check this
-                </span>
-                {error}
-              </p>
-            ) : null}
+            {error ? <ErrorAlert label="Check this" message={error} /> : null}
             <div className="space-y-2">
               <label htmlFor="vl-reset-email" className="block text-xs uppercase" style={label}>
                 Work email

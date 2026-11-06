@@ -1,6 +1,6 @@
 """index users.manager_id
 
-Revision ID: 0002
+Revision ID: 0002a
 Revises: 0001
 Create Date: 2026-11-06
 
@@ -11,7 +11,7 @@ indexed (uniquely) by 0001; this adds the matching index for manager_id.
 
 from alembic import op
 
-revision = "0002"
+revision = "0002a"
 down_revision = "0001"
 branch_labels = None
 depends_on = None
