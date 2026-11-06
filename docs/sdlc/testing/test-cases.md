@@ -3,9 +3,9 @@
 > Maintained by QuorQ AI SDLC. Text between `sdlc:auto` markers is regenerated; anything outside them is yours and is kept.
 
 <!-- sdlc:auto:start summary -->
-116 tests · Passed 92 · Failed 0 · Skipped 0 · Not run 24
+117 tests · Passed 92 · Failed 0 · Skipped 0 · Not run 25
 
-Acceptance criteria covered: 20/45 · passing: 7/45
+Acceptance criteria covered: 22/45 · passing: 7/45
 <!-- sdlc:auto:end summary -->
 
 <!-- sdlc:auto:start tests -->
@@ -34,6 +34,7 @@ Acceptance criteria covered: 20/45 · passing: 7/45
 | AC-002 | [AC-002] an unknown email shows the same generic error message | E2E | Not run yet | `frontend/e2e/login.spec.ts` |
 | AC-002 | [AC-002] wrong password shows the single generic error message | E2E | Not run yet | `frontend/e2e/login.spec.ts` |
 | AC-003 | [AC-003] signing out then reloading requires signing in again | E2E | Not run yet | `frontend/e2e/login.spec.ts` |
+| AC-044, AC-045 | [AC-044][AC-045] the description text is gone and sign-in still completes | E2E | Not run yet | `frontend/e2e/login.spec.ts` |
 | — | [NFR-010] the login screen is usable at a 360px mobile viewport | E2E | Not run yet | `frontend/e2e/login.spec.ts` |
 
 ### US-004: HR creates and maintains employee records
@@ -87,15 +88,15 @@ Acceptance criteria covered: 20/45 · passing: 7/45
 | — | test_ac_every_protected_endpoint_requires_a_bearer_token[get-/analytics-None] | Unit | Passed | `backend/tests/test_rbac.py` |
 | — | test_ac_every_protected_endpoint_requires_a_bearer_token[get-/dashboard/me-None] | Unit | Passed | `backend/tests/test_rbac.py` |
 | — | test_ac_every_protected_endpoint_requires_a_bearer_token[get-/dashboard/team-None] | Unit | Passed | `backend/tests/test_rbac.py` |
-| — | test_ac_every_protected_endpoint_requires_a_bearer_token[get-/employees/4c085797-148f-4642-a596-2061c554e481/reports-None] | Unit | Passed | `backend/tests/test_rbac.py` |
+| — | test_ac_every_protected_endpoint_requires_a_bearer_token[get-/employees/46cc5dff-2f5a-430b-8200-476d3a1b0c6c/reports-None] | Unit | Passed | `backend/tests/test_rbac.py` |
 | — | test_ac_every_protected_endpoint_requires_a_bearer_token[get-/goals-None] | Unit | Passed | `backend/tests/test_rbac.py` |
-| — | test_ac_every_protected_endpoint_requires_a_bearer_token[get-/goals/7a402e9d-d713-4b39-9b76-d7bebab41770/check-ins-None] | Unit | Passed | `backend/tests/test_rbac.py` |
+| — | test_ac_every_protected_endpoint_requires_a_bearer_token[get-/goals/31709cad-3e82-4baa-abac-15c5dc661ce7/check-ins-None] | Unit | Passed | `backend/tests/test_rbac.py` |
 | — | test_ac_every_protected_endpoint_requires_a_bearer_token[get-/praise/received-None] | Unit | Passed | `backend/tests/test_rbac.py` |
-| — | test_ac_every_protected_endpoint_requires_a_bearer_token[patch-/goals/fe6f6c8e-c876-40b3-afb7-7d7b63a44583/progress-json_body3] | Unit | Passed | `backend/tests/test_rbac.py` |
+| — | test_ac_every_protected_endpoint_requires_a_bearer_token[patch-/goals/32dee048-7947-40da-b58b-db1308f21e2e/progress-json_body3] | Unit | Passed | `backend/tests/test_rbac.py` |
 | — | test_ac_every_protected_endpoint_requires_a_bearer_token[post-/goals-json_body1] | Unit | Passed | `backend/tests/test_rbac.py` |
-| — | test_ac_every_protected_endpoint_requires_a_bearer_token[post-/goals/17858abe-0ef3-4bfa-8581-0194f28ca825/check-ins-json_body4] | Unit | Passed | `backend/tests/test_rbac.py` |
+| — | test_ac_every_protected_endpoint_requires_a_bearer_token[post-/goals/34a38cc3-4666-4e01-8f9d-8b3af0b790a8/check-ins-json_body4] | Unit | Passed | `backend/tests/test_rbac.py` |
 | — | test_ac_every_protected_endpoint_requires_a_bearer_token[post-/praise-json_body11] | Unit | Passed | `backend/tests/test_rbac.py` |
-| — | test_ac_every_protected_endpoint_requires_a_bearer_token[put-/goals/cd344d8c-107c-4b59-95d2-a383d7d9ac19-json_body2] | Unit | Passed | `backend/tests/test_rbac.py` |
+| — | test_ac_every_protected_endpoint_requires_a_bearer_token[put-/goals/727d2a93-0517-4d83-8418-9fad68667a2e-json_body2] | Unit | Passed | `backend/tests/test_rbac.py` |
 
 ### US-003: Password reset
 

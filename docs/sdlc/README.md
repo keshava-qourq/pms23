@@ -5,7 +5,7 @@
 <!-- sdlc:auto:start overview -->
 performance management system
 
-**Documentation version:** v9
+**Documentation version:** v10
 <!-- sdlc:auto:end overview -->
 
 ## Contents
@@ -15,7 +15,7 @@ performance management system
 |---|---|
 | [Requirements](requirements/README.md) | v2 approved |
 | [Architecture](architecture/README.md) | 16 entries |
-| [Development](development/README.md) | 6 entries |
+| [Development](development/README.md) | 9 entries |
 | [Testing](testing/README.md) | 1 entry |
 | [Deployment](deployment/README.md) | 0 entries |
 | [Maintenance](maintenance/README.md) | 0 entries |
@@ -26,12 +26,12 @@ performance management system
 | [Developer guide](development/developer-guide.md) | generated |
 | [API reference](development/api-reference.md) | 27 routes |
 | [Test report](testing/test-report.md) | no_tests |
-| [Tests](testing/test-cases.md) | 116 tests |
+| [Tests](testing/test-cases.md) | 117 tests |
 | [Deployment guide](deployment/deployment-guide.md) | not deployed yet |
 | [Runbook](deployment/runbook.md) | not deployed yet |
 | [Release notes](deployment/release-notes.md) | 0 releases |
 | [Traceability matrix](traceability-matrix.md) | 17 requirements |
-| [Changelog](CHANGELOG.md) | 9 versions |
+| [Changelog](CHANGELOG.md) | 10 versions |
 <!-- sdlc:auto:end contents -->
 
 ## Open gaps
@@ -57,17 +57,10 @@ performance management system
 
 ### Development
 
-- Delivery record does not confirm whether all three sub-tasks (T1-T3) were completed individually -- only a single ticket-level delivered status and commit are given.
-- US-015 and US-016 both report the identical commit hash de16eb51a722219aada45123727d7385e627a3bd -- flagged as a discrepancy: unclear if this is a single combined commit covering both stories or a reporting error.
-- US-016 and US-015 both report the identical commit hash de16eb51a722219aada45123727d7385e627a3bd -- flagged as a discrepancy: unclear if this is a single combined commit covering both stories or a reporting error.
-- No ticket-level status/commit provided for US-001 (Email/password login) despite being foundational to Sprint 1.
-- No ticket-level status/commit provided for US-017 (sign-in form cleanup).
-- No ticket-level status/commit provided for US-004 (HR employee records) and US-005 (reporting lines), both Sprint 1 goals.
-- No ticket-level status/commit provided for US-006 (data protection/audit trail), a Sprint 3 goal assigned to security-agent.
-- No ticket-level status/commit provided for US-007, US-008, US-009 (goal setting/SMART/OKR/cascading), Sprint 3 goals.
-- No ticket-level status/commit provided for US-010, US-011, US-012 (progress tracking, check-ins, reminders), Sprint 4/5 goals.
-- No ticket-level status/commit provided for US-013, US-014 (personal and manager goal dashboards), Sprint 4/5 goals.
-- Conflict: run status field says 'completed' while 13 of 17 planned stories show no delivery evidence -- needs confirmation whether these were deferred, dropped, or simply omitted from reporting.
+- The input does not explicitly assign backlog items to sprints; the mapping above is inferred by matching sprint goal text to known requirement keys, not an explicit sprint-to-item assignment in the plan -- treat as approximate and confirm against the authoritative sprint board.
+- Discrepancy: overall run status says 'completed' but only 1 of 17 stories (and none of the associated tasks) has a recorded delivery/commit -- cannot confirm whether the remaining stories and tasks were actually built, tested, or merged.
+- No per-ticket status is available for US-001, US-002, US-003, US-004, US-005, US-006, US-007, US-008, US-009, US-010, US-011, US-012 (and its tasks), US-013, US-014, US-015, US-016.
+- No date recorded for delivery; no reviewer/approval information provided beyond 'delivered' status.
 
 ### Testing
 

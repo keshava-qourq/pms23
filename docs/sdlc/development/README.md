@@ -3,66 +3,82 @@
 > Maintained by QuorQ AI SDLC. Text between `sdlc:auto` markers is regenerated; anything outside them is yours and is kept.
 
 <!-- sdlc:auto:start narrative -->
-### DEV-PLAN-V1 · approved · source: plan
+### PLAN-v1 · approved · source: plan
 
-Approved development plan (version 1) organizes PMS23 work into 5 sprints of 20-point capacity each, spanning 6 epics: access/auth/RBAC, employee records & reporting lines, goal setting (SMART/OKR), goal progress & check-ins, personal goal dashboard, and praise & recognition.
+Development plan version 1 is approved, organized into 5 sprints of 20-point capacity each (100 points total) covering authentication/RBAC, employee records, goal setting, progress tracking, and praise/recognition.
 
-Sprint 1 goal: deliver core login and foundational employee/reporting-line management so HR can onboard the organisation. Sprint 2 goal: complete role-based access control and password recovery, ship lightweight praise/recognition, and clean up the sign-in screen. Sprint 3 goal: enable SMART/OKR goal creation, manager-assigned goals, optional objective cascading, and HR data-protection/audit controls. Sprint 4 goal: deliver goal progress tracking, periodic check-ins, and the employee's personal goal dashboard. Sprint 5 goal: deliver automated due-date/check-in reminders and the manager's team-goals view. Backlog breakdown: EPIC-001 Access/Auth/RBAC contains US-001 (Email/password login, 8pts, backend-agent, tasks T1 login/logout+session, T2 login form UI, T3 role-based post-login redirect), US-002 (Role-based access to sensitive HR data, 8pts, backend-agent, tasks T1 API authz checks, T2 executive read-only restriction, T3 frontend route guards), US-003 (Password reset, 3pts, backend-agent), US-017 (Remove role-permission description text from sign-in form, 1pt, frontend-agent). EPIC-002 Employee Records & Reporting-Line Management contains US-004 (HR creates/maintains employee records, 5pts, backend-agent), US-005 (Define/maintain reporting lines, 5pts, backend-agent), US-006 (Data protection: export, delete, audit trail, 5pts, security-agent). EPIC-003 Goal Setting contains US-007 (Create SMART/OKR goal, 5pts, backend-agent), US-008 (Manager sets goals for direct reports, 5pts, backend-agent), US-009 (Optional cascading from higher-level objective, 3pts, backend-agent). EPIC-004 Goal Progress Tracking contains US-010 (Update progress by percentage/status, 5pts, backend-agent), US-011 (Record periodic check-ins, 3pts, backend-agent), US-012 (Due-date and check-in reminders, 8pts, integration-agent, tasks T1 scheduled reminder job, T2 SendGrid email integration with failure logging, T3 in-app notification records + read/unread API, T4 notifications UI panel). EPIC-005 Personal Goal Dashboard contains US-013 (Employee views personal goal dashboard, 5pts, frontend-agent), US-014 (Manager views direct reports' goals, 5pts, frontend-agent). EPIC-006 Praise & Recognition contains US-015 (Give praise/recognition note, 3pts, backend-agent), US-016 (View praise received, 2pts, frontend-agent).
+Sprint 1: core login and foundational employee/reporting-line management so HR can onboard the org (maps to US-001, US-004, US-005). Sprint 2: role-based access control, password recovery, lightweight praise/recognition, sign-in screen cleanup (maps to US-002, US-003, US-015, US-016, US-017). Sprint 3: SMART/OKR goal creation, manager-assigned goals, optional cascading, HR data-protection/audit controls (maps to US-007, US-008, US-009, US-006). Sprint 4: goal progress tracking, periodic check-ins, personal goal dashboard (maps to US-010, US-011, US-013). Sprint 5: automated reminders and manager's team-goals view (maps to US-012, US-014). Each sprint has capacity=20.
 
-**Related:** US-001, US-002, US-003, US-017, US-004, US-005, US-006, US-007, US-008, US-009, US-010, US-011, US-012, US-013, US-014, US-015, US-016
+**Related:** US-001, US-004, US-005, US-002, US-003, US-015, US-016, US-017, US-007, US-008, US-009, US-006, US-010, US-011, US-013, US-012, US-014
 
-### DEV-US-002 · approved · source: dev:US-002
+- ⚠ The input does not explicitly assign backlog items to sprints; the mapping above is inferred by matching sprint goal text to known requirement keys, not an explicit sprint-to-item assignment in the plan -- treat as approximate and confirm against the authoritative sprint board.
 
-Ticket US-002 (Role-based access to sensitive HR data) was delivered, implementing backend authorization and frontend route guarding per role.
+### EPIC-001 · approved · source: plan:EPIC-001
 
-Status: delivered. Commit: 75de0b543235efe101869030e9b9cdea4441675e. Planned scope per backlog: role-based authorization checks in the API, restriction of the executive role to read-only analytics, and frontend route guards per role (tasks US-002-T1/T2/T3). Role: backend-agent, 8 story points, part of Sprint 2 goal to complete role-based access control.
+Epic covering access, authentication, and role-based access control for the system.
 
-**Related:** US-002, US-001
+Contains: US-001 Email/password login (8 pts, backend-agent) with tasks US-001-T1 (login/logout endpoints and session handling, backend-agent), US-001-T2 (login form UI, frontend-agent), US-001-T3 (role-appropriate post-login redirect, frontend-agent); US-002 Role-based access to sensitive HR data (8 pts, backend-agent) with tasks US-002-T1 (role-based authorization checks in API), US-002-T2 (restrict executive role to read-only analytics), US-002-T3 (frontend route guards per role); US-003 Password reset (3 pts, backend-agent); US-017 Remove role-permission description text from sign-in form (1 pt, frontend-agent). Epic itself has no assigned role.
 
-- ⚠ Delivery record does not confirm whether all three sub-tasks (T1-T3) were completed individually -- only a single ticket-level delivered status and commit are given.
+**Related:** US-001, US-002, US-003, US-017
 
-### DEV-US-003 · approved · source: dev:US-003
+### EPIC-002 · approved · source: plan:EPIC-002
 
-Ticket US-003 (Password reset) was delivered as part of Sprint 2's role-based access control and password recovery goal.
+Epic covering employee records management and reporting-line structure.
 
-Status: delivered. Commit: e3b055e1a6ac49bf90a11dac75e059ef31d34196. Role: backend-agent, 3 story points. No sub-tasks were listed in the plan for this story.
+Contains: US-004 HR creates and maintains employee records (5 pts, backend-agent); US-005 Define and maintain reporting lines (5 pts, backend-agent); US-006 Data protection: export, delete and audit trail (5 pts, security-agent). Epic itself has no assigned role.
 
-**Related:** US-003, US-001
+**Related:** US-004, US-005, US-006
 
-### DEV-US-015 · approved · source: dev:US-015
+### EPIC-003 · approved · source: plan:EPIC-003
 
-Ticket US-015 (Give a praise/recognition note) was delivered, part of Sprint 2's lightweight praise/recognition feature.
+Epic covering SMART/OKR goal setting functionality.
 
-Status: delivered. Commit: de16eb51a722219aada45123727d7385e627a3bd. Role: backend-agent, 3 story points.
+Contains: US-007 Create a goal with SMART/OKR structure (5 pts, backend-agent); US-008 Manager sets goals for direct reports (5 pts, backend-agent); US-009 Optionally cascade a goal from a higher-level objective (3 pts, backend-agent). Epic itself has no assigned role.
+
+**Related:** US-007, US-008, US-009
+
+### EPIC-004 · approved · source: plan:EPIC-004
+
+Epic covering goal progress tracking, due dates, and check-ins.
+
+Contains: US-010 Update goal progress by percentage or status (5 pts, backend-agent); US-011 Record periodic check-ins on a goal (3 pts, backend-agent); US-012 Due-date and check-in reminders (8 pts, integration-agent) with tasks US-012-T1 (scheduled reminder job, integration-agent), US-012-T2 (SendGrid email send with failure logging, integration-agent), US-012-T3 (in-app notification records and read/unread API, backend-agent), US-012-T4 (notifications UI panel, frontend-agent). Epic itself has no assigned role.
+
+**Related:** US-010, US-011, US-012
+
+### EPIC-005 · approved · source: plan:EPIC-005
+
+Epic covering the personal goal dashboard for employees and managers.
+
+Contains: US-013 Employee views personal goal dashboard (5 pts, frontend-agent); US-014 Manager views direct reports' goals (5 pts, frontend-agent). Epic itself has no assigned role.
+
+**Related:** US-013, US-014
+
+### EPIC-006 · approved · source: plan:EPIC-006
+
+Epic covering praise and recognition features.
+
+Contains: US-015 Give a praise/recognition note (3 pts, backend-agent); US-016 View praise received (2 pts, frontend-agent). Epic itself has no assigned role.
 
 **Related:** US-015, US-016
 
-- ⚠ US-015 and US-016 both report the identical commit hash de16eb51a722219aada45123727d7385e627a3bd -- flagged as a discrepancy: unclear if this is a single combined commit covering both stories or a reporting error.
+### DEV-RUN-STATUS · draft · source: dev
 
-### DEV-US-016 · approved · source: dev:US-016
+The development run for this phase is marked 'completed' overall, but the only ticket with an individual delivery record provided is US-017.
 
-Ticket US-016 (View praise received) was delivered, part of Sprint 2's lightweight praise/recognition feature.
+Input states development run status = completed, yet supplies ticket-level detail for just one item (US-017: delivered, commit f83df11dcc1d965d4b3d89db0a4988fe55f8c095). No ticket records (status, commits) were provided for US-001 through US-016 or their sub-tasks.
 
-Status: delivered. Commit: de16eb51a722219aada45123727d7385e627a3bd. Role: frontend-agent, 2 story points.
+**Related:** US-001, US-002, US-003, US-004, US-005, US-006, US-007, US-008, US-009, US-010, US-011, US-012, US-013, US-014, US-015, US-016, US-017
 
-**Related:** US-016, US-015
+- ⚠ Discrepancy: overall run status says 'completed' but only 1 of 17 stories (and none of the associated tasks) has a recorded delivery/commit -- cannot confirm whether the remaining stories and tasks were actually built, tested, or merged.
+- ⚠ No per-ticket status is available for US-001, US-002, US-003, US-004, US-005, US-006, US-007, US-008, US-009, US-010, US-011, US-012 (and its tasks), US-013, US-014, US-015, US-016.
 
-- ⚠ US-016 and US-015 both report the identical commit hash de16eb51a722219aada45123727d7385e627a3bd -- flagged as a discrepancy: unclear if this is a single combined commit covering both stories or a reporting error.
+### US-017 · approved · source: dev:US-017
 
-### DEV-GAP-COVERAGE · draft · source: dev:run-status
+Ticket US-017 (remove role-permission description text from sign-in form) was delivered.
 
-The development run is marked 'completed', but ticket-level delivery records were only provided for 4 of the 17 planned stories.
+Status: delivered. Commit: f83df11dcc1d965d4b3d89db0a4988fe55f8c095. Corresponds to planned backlog item US-017 (1 pt, frontend-agent) under EPIC-001.
 
-The approved plan (v1) schedules 17 stories across 5 sprints, but the development run input lists delivered status only for US-002, US-003, US-015, and US-016. No ticket records (status or commit) were given for US-001, US-017, US-004, US-005, US-006, US-007, US-008, US-009, US-010, US-011, US-012, US-013, or US-014, despite the overall run being reported as 'completed'.
+**Related:** US-017, EPIC-001
 
-**Related:** US-001, US-017, US-004, US-005, US-006, US-007, US-008, US-009, US-010, US-011, US-012, US-013, US-014
-
-- ⚠ No ticket-level status/commit provided for US-001 (Email/password login) despite being foundational to Sprint 1.
-- ⚠ No ticket-level status/commit provided for US-017 (sign-in form cleanup).
-- ⚠ No ticket-level status/commit provided for US-004 (HR employee records) and US-005 (reporting lines), both Sprint 1 goals.
-- ⚠ No ticket-level status/commit provided for US-006 (data protection/audit trail), a Sprint 3 goal assigned to security-agent.
-- ⚠ No ticket-level status/commit provided for US-007, US-008, US-009 (goal setting/SMART/OKR/cascading), Sprint 3 goals.
-- ⚠ No ticket-level status/commit provided for US-010, US-011, US-012 (progress tracking, check-ins, reminders), Sprint 4/5 goals.
-- ⚠ No ticket-level status/commit provided for US-013, US-014 (personal and manager goal dashboards), Sprint 4/5 goals.
-- ⚠ Conflict: run status field says 'completed' while 13 of 17 planned stories show no delivery evidence -- needs confirmation whether these were deferred, dropped, or simply omitted from reporting.
+- ⚠ No date recorded for delivery; no reviewer/approval information provided beyond 'delivered' status.
 <!-- sdlc:auto:end narrative -->
