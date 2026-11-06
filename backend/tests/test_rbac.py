@@ -116,12 +116,6 @@ def test_ac004_employee_cannot_read_another_employees_check_ins(
     assert "confidential progress note" not in response.text
 
 
-@pytest.mark.xfail(
-    reason="DEFECT: GET /praise/received is still the scaffolded stub -- it ignores "
-    "the caller entirely and always returns the same fixed body, so it neither "
-    "scopes to the caller's own praise nor requires authentication.",
-    strict=True,
-)
 def test_ac004_employee_cannot_see_another_employees_praise_in_their_own_received_list(
     client: TestClient, db_session: Session
 ) -> None:
@@ -309,26 +303,8 @@ def test_ac007_hr_admin_reads_any_employees_team_dashboard(
         ("get", "/dashboard/team", None),
         ("get", "/analytics", None),
         ("get", f"/employees/{uuid.uuid4()}/reports", None),
-        pytest.param(
-            "get",
-            "/praise/received",
-            None,
-            marks=pytest.mark.xfail(
-                reason="DEFECT: GET /praise/received has no auth dependency and is "
-                "still the scaffolded stub -- it returns 200 with no token at all.",
-                strict=True,
-            ),
-        ),
-        pytest.param(
-            "post",
-            "/praise",
-            {"recipient_id": str(uuid.uuid4()), "message": "x"},
-            marks=pytest.mark.xfail(
-                reason="DEFECT: POST /praise has no auth dependency and is still the "
-                "scaffolded stub -- it never rejects an unauthenticated caller.",
-                strict=True,
-            ),
-        ),
+        ("get", "/praise/received", None),
+        ("post", "/praise", {"recipient_id": str(uuid.uuid4()), "message": "x"}),
     ],
 )
 def test_ac_every_protected_endpoint_requires_a_bearer_token(

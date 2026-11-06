@@ -74,9 +74,7 @@ class PasswordResetConfirmRequest(BaseModel):
         the token -- this runs on the field alone, before the handler ever
         sees the request."""
         if len(value) < _PASSWORD_MIN_LENGTH:
-            raise ValueError(
-                f"Password must be at least {_PASSWORD_MIN_LENGTH} characters long"
-            )
+            raise ValueError(f"Password must be at least {_PASSWORD_MIN_LENGTH} characters long")
         if not re.search(r"[A-Z]", value):
             raise ValueError("Password must contain at least one uppercase letter")
         if not re.search(r"[a-z]", value):
@@ -218,6 +216,13 @@ class CheckInRead(BaseModel):
 class PraiseCreate(BaseModel):
     recipient_id: uuid.UUID
     message: str
+
+    @field_validator("message")
+    @classmethod
+    def _message_not_blank(cls, value: str) -> str:
+        if not value.strip():
+            raise ValueError("Message must not be empty")
+        return value
 
 
 class PraiseRead(BaseModel):
