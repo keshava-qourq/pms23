@@ -30,8 +30,6 @@ const {
   Empty,
 } = UI;
 
-const { Check, Filter } = Icons;
-
 const SURFACE = "#1b2722";
 const SURFACE_2 = "#213029";
 const LINE = "rgba(233,237,233,0.11)";

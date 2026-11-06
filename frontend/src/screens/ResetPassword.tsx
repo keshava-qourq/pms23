@@ -10,7 +10,7 @@ const HAIRLINE = "1px solid rgba(255,255,255,0.10)";
 const INVALID_TOKEN_MESSAGE =
   "This reset link is invalid or has expired. Please request a new one.";
 
-type Phase = "idle" | "loading" | "done";
+type Phase = "idle" | "loading";
 
 // Password rules mirror the server's (backend/app/schemas.py
 // PasswordResetConfirmRequest): checked client-side before submit so a
@@ -83,7 +83,6 @@ export default function Screen() {
         method: "POST",
         body: JSON.stringify({ token, new_password: password }),
       });
-      setPhase("done");
       navigate("/login", { replace: true });
     } catch {
       // AC-010/NFR-003: an expired, used or unknown token all land on the
@@ -120,7 +119,11 @@ export default function Screen() {
 
         {tokenRejected ? (
           <div className="mt-8 space-y-5">
-            <p role="alert" className="text-sm leading-relaxed" style={{ color: brand.primaryColor }}>
+            <p
+              role="alert"
+              className="text-sm leading-relaxed"
+              style={{ color: brand.primaryColor }}
+            >
               {INVALID_TOKEN_MESSAGE}
             </p>
             <Link
