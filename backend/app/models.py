@@ -86,7 +86,7 @@ class User(Base):
     # "employee" | "manager" | "hr_admin" | "executive" -- not a DB enum, so
     # adding a role never needs a migration.
     role = Column(String(32), nullable=False)
-    manager_id = Column(GUID(), ForeignKey("users.id"), nullable=True)
+    manager_id = Column(GUID(), ForeignKey("users.id"), nullable=True, index=True)
     is_active = Column(Boolean, nullable=False, default=True)
     anonymised_at = Column(DateTime(timezone=True), nullable=True)
     created_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now())
@@ -183,8 +183,10 @@ class AuditLog(Base):
 
     id = _uuid_pk()
     actor_id = Column(GUID(), ForeignKey("users.id"), nullable=True)
-    entity_type = Column(String(64), nullable=False)
+    entity_type = Column(String(64), nullable=False, index=True)
     entity_id = Column(GUID(), nullable=False)
     action = Column(String(64), nullable=False)
     changes = Column(JSON, nullable=True)
-    created_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now())
+    created_at = Column(
+        DateTime(timezone=True), nullable=False, server_default=func.now(), index=True
+    )

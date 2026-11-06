@@ -71,6 +71,7 @@ class EmployeeCreate(BaseModel):
     name: str
     email: str
     role: Role
+    manager_id: uuid.UUID | None = None
 
 
 class EmployeeUpdate(BaseModel):
@@ -99,6 +100,13 @@ class EmployeeRead(BaseModel):
     anonymised_at: datetime | None = None
     created_at: datetime
     updated_at: datetime
+
+
+class EmployeeList(BaseModel):
+    items: list[EmployeeRead]
+    total: int
+    skip: int
+    limit: int
 
 
 # ---- objectives ---------------------------------------------------------------
