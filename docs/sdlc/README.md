@@ -5,7 +5,7 @@
 <!-- sdlc:auto:start overview -->
 performance management system
 
-**Documentation version:** v6
+**Documentation version:** v7
 <!-- sdlc:auto:end overview -->
 
 ## Contents
@@ -31,7 +31,7 @@ performance management system
 | [Runbook](deployment/runbook.md) | not deployed yet |
 | [Release notes](deployment/release-notes.md) | 0 releases |
 | [Traceability matrix](traceability-matrix.md) | 16 requirements |
-| [Changelog](CHANGELOG.md) | 6 versions |
+| [Changelog](CHANGELOG.md) | 7 versions |
 <!-- sdlc:auto:end contents -->
 
 ## Open gaps
@@ -66,8 +66,9 @@ performance management system
 
 ### Testing
 
-- No ticket or requirement linkage provided, so traceability from this result to specific user stories (US-001..US-016) cannot be confirmed.
-- No breakdown of what the 5 checks actually verify (functionality, test type, or components covered).
-- No date/timestamp recorded for when this run occurred.
-- No broader test plan, test case list, or coverage report has been supplied for this phase beyond this single aggregate result.
+- No breakdown of what the 5 checks actually verify -- cannot confirm which functional areas were exercised.
+- No mapping provided between these checks and specific requirement IDs (US-001 through US-016), so requirement-level test coverage cannot be confirmed.
+- No ticket ID associated with this run, so it cannot be traced to a specific plan or development item.
+- No information on test environment, test data, or whether these are unit, integration, or end-to-end checks.
+- No record of any failed/retried runs prior to this success, or of manual/exploratory testing, if any was performed.
 <!-- sdlc:auto:end open-gaps -->
