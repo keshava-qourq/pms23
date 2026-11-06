@@ -45,7 +45,9 @@ test("[AC-040] sends a praise note and sees the confirmation", async ({ page }) 
   await page.locator("#praise-message").fill("Thanks for the thorough review this sprint.");
   await page.getByRole("button", { name: /send praise/i }).click();
 
-  await expect(page.getByRole("status").filter({ hasText: /sent to hannah lindqvist/i })).toBeVisible();
+  await expect(
+    page.getByRole("status").filter({ hasText: /sent to hannah lindqvist/i }),
+  ).toBeVisible();
 });
 
 // AC-041: submitting with no recipient chosen prompts for one.

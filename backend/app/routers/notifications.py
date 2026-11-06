@@ -41,9 +41,7 @@ async def mark_notification_read(
 ) -> Response:
     notification = db.query(models.Notification).filter(models.Notification.id == id).first()
     if notification is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Notification not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Notification not found")
     if notification.user_id != current_user.id:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden")
     notification.is_read = True
