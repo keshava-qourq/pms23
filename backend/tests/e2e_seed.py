@@ -59,6 +59,28 @@ E2E_USERS = [
         "role": "employee",
         "is_active": False,
     },
+    # Dedicated to the password-reset e2e suite (US-003-3), so a token
+    # created or spent in that suite never collides with the login suite's
+    # fixtures. Each run re-seeds the password hash too, so a password this
+    # suite changes is put back before the next run reads it.
+    {
+        "email": "e2e.resetflow@example.com",
+        "name": "E2E Reset Flow",
+        "role": "employee",
+        "is_active": True,
+    },
+    {
+        "email": "e2e.resetflow.expired@example.com",
+        "name": "E2E Reset Flow Expired",
+        "role": "employee",
+        "is_active": True,
+    },
+    {
+        "email": "e2e.resetflow.used@example.com",
+        "name": "E2E Reset Flow Used",
+        "role": "employee",
+        "is_active": True,
+    },
 ]
 
 

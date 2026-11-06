@@ -2,6 +2,8 @@ import * as React from "react";
 import { NavLink, Navigate, Outlet, Route, Routes, useNavigate } from "react-router-dom";
 
 import Login from "@/screens/Login";
+import ForgotPassword from "@/screens/ForgotPassword";
+import ResetPassword from "@/screens/ResetPassword";
 import Dashboard from "@/screens/Dashboard";
 import GoalDetail from "@/screens/GoalDetail";
 import Team from "@/screens/Team";
@@ -89,6 +91,8 @@ export default function App() {
   return (
     <Routes>
       <Route path="/login" element={<Login />} />
+      <Route path="/forgot-password" element={<ForgotPassword />} />
+      <Route path="/reset-password" element={<ResetPassword />} />
       <Route
         element={
           <RequireAuth>
