@@ -5,7 +5,7 @@
 <!-- sdlc:auto:start overview -->
 performance management system
 
-**Documentation version:** v5
+**Documentation version:** v6
 <!-- sdlc:auto:end overview -->
 
 ## Contents
@@ -15,7 +15,7 @@ performance management system
 |---|---|
 | [Requirements](requirements/README.md) | v1 approved |
 | [Architecture](architecture/README.md) | 16 entries |
-| [Development](development/README.md) | 5 entries |
+| [Development](development/README.md) | 11 entries |
 | [Testing](testing/README.md) | 1 entry |
 | [Deployment](deployment/README.md) | 0 entries |
 | [Maintenance](maintenance/README.md) | 0 entries |
@@ -26,12 +26,12 @@ performance management system
 | [Developer guide](development/developer-guide.md) | generated |
 | [API reference](development/api-reference.md) | 27 routes |
 | [Test report](testing/test-report.md) | not run yet |
-| [Tests](testing/test-cases.md) | 51 tests |
+| [Tests](testing/test-cases.md) | 116 tests |
 | [Deployment guide](deployment/deployment-guide.md) | not deployed yet |
 | [Runbook](deployment/runbook.md) | not deployed yet |
 | [Release notes](deployment/release-notes.md) | 0 releases |
 | [Traceability matrix](traceability-matrix.md) | 16 requirements |
-| [Changelog](CHANGELOG.md) | 5 versions |
+| [Changelog](CHANGELOG.md) | 6 versions |
 <!-- sdlc:auto:end contents -->
 
 ## Open gaps
@@ -56,11 +56,13 @@ performance management system
 
 ### Development
 
-- No confirmation in the input of which sub-tasks (T1/T2/T3) were individually completed vs. the story as a whole -- only the parent story's delivered status and a single commit were given.
-- No further detail provided on what employee-record fields or validations were implemented -- only story-level delivered status is recorded.
-- US-004 and US-005 share the exact same commit hash; input does not clarify whether this is one combined commit delivering both stories or a data-entry duplication -- flagging for confirmation.
-- Conflict: run status='completed' but 13 of 16 planned stories have no ticket/commit record -- needs confirmation of whether these are still in progress, were deferred, or the status field is inaccurate.
-- No tickets recorded for US-002 (role-based HR data access), US-003 (password reset), US-006 (data protection export/delete/audit), US-007/US-008/US-009 (goal creation/assignment/cascade), US-010/US-011 (progress/check-ins), US-012 and tasks (reminders), US-013/US-014 (dashboards), US-015/US-016 (praise/recognition).
+- No delivery/ticket status reported for US-001, US-004, or US-005 despite the development run being marked 'completed'.
+- No delivery/ticket status reported for US-006, US-007, US-008, or US-009 despite the development run being marked 'completed'.
+- No delivery/ticket status reported for US-010, US-011, or US-013 despite the development run being marked 'completed'.
+- No delivery/ticket status reported for US-012 or US-014 despite the development run being marked 'completed'.
+- Input does not confirm per-sub-task completion (US-002-T1, US-002-T2, US-002-T3) separately from the parent story.
+- Same commit hash is listed for US-015 and US-016; confirm whether this is intentional (combined commit) or a reporting duplication.
+- Discrepancy: run-level status says 'completed' while 12 of 16 planned stories (and all sub-tasks) have no delivery evidence -- needs confirmation of whether they were completed outside reported tickets, descoped, or omitted from reporting.
 
 ### Testing
 
