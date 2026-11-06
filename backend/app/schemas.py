@@ -219,6 +219,38 @@ class NotificationRead(BaseModel):
     created_at: datetime
 
 
+# ---- dashboard & analytics ----------------------------------------------------
+
+
+class GoalSummary(BaseModel):
+    id: uuid.UUID
+    title: str
+    status: GoalStatus
+    progress_percent: int | None = None
+    due_date: date
+
+
+class DashboardSummary(BaseModel):
+    employee_id: uuid.UUID
+    name: str
+    total_goals: int
+    completed_goals: int
+    average_progress: float
+    goals: list[GoalSummary]
+
+
+class TeamDashboardResponse(BaseModel):
+    reports: list[DashboardSummary]
+
+
+class AnalyticsResponse(BaseModel):
+    total_employees: int
+    total_goals: int
+    completed_goals: int
+    average_progress: float
+    goals_by_status: dict[str, int]
+
+
 # ---- audit log ----------------------------------------------------------------
 
 
