@@ -5,7 +5,7 @@
 <!-- sdlc:auto:start overview -->
 performance management system
 
-**Documentation version:** v4
+**Documentation version:** v5
 <!-- sdlc:auto:end overview -->
 
 ## Contents
@@ -16,7 +16,7 @@ performance management system
 | [Requirements](requirements/README.md) | v1 approved |
 | [Architecture](architecture/README.md) | 16 entries |
 | [Development](development/README.md) | 5 entries |
-| [Testing](testing/README.md) | 0 entries |
+| [Testing](testing/README.md) | 1 entry |
 | [Deployment](deployment/README.md) | 0 entries |
 | [Maintenance](maintenance/README.md) | 0 entries |
 | [Data model](architecture/data-model.md) | generated |
@@ -31,7 +31,7 @@ performance management system
 | [Runbook](deployment/runbook.md) | not deployed yet |
 | [Release notes](deployment/release-notes.md) | 0 releases |
 | [Traceability matrix](traceability-matrix.md) | 16 requirements |
-| [Changelog](CHANGELOG.md) | 4 versions |
+| [Changelog](CHANGELOG.md) | 5 versions |
 <!-- sdlc:auto:end contents -->
 
 ## Open gaps
@@ -61,4 +61,11 @@ performance management system
 - US-004 and US-005 share the exact same commit hash; input does not clarify whether this is one combined commit delivering both stories or a data-entry duplication -- flagging for confirmation.
 - Conflict: run status='completed' but 13 of 16 planned stories have no ticket/commit record -- needs confirmation of whether these are still in progress, were deferred, or the status field is inaccurate.
 - No tickets recorded for US-002 (role-based HR data access), US-003 (password reset), US-006 (data protection export/delete/audit), US-007/US-008/US-009 (goal creation/assignment/cascade), US-010/US-011 (progress/check-ins), US-012 and tasks (reminders), US-013/US-014 (dashboards), US-015/US-016 (praise/recognition).
+
+### Testing
+
+- No ticket or requirement linkage provided, so traceability from this result to specific user stories (US-001..US-016) cannot be confirmed.
+- No breakdown of what the 5 checks actually verify (functionality, test type, or components covered).
+- No date/timestamp recorded for when this run occurred.
+- No broader test plan, test case list, or coverage report has been supplied for this phase beyond this single aggregate result.
 <!-- sdlc:auto:end open-gaps -->
