@@ -84,7 +84,7 @@ def test_ac004_employee_cannot_read_or_write_another_employees_goal(
     client: TestClient, db_session: Session
 ) -> None:
     owner = _create_user(db_session, email="ac004-owner@example.com", role="employee")
-    other = _create_user(db_session, email="ac004-other@example.com", role="employee")
+    _create_user(db_session, email="ac004-other@example.com", role="employee")
     goal = _make_goal(db_session, owner=owner)
     token = _login(client, "ac004-other@example.com")
 
@@ -101,7 +101,7 @@ def test_ac004_employee_cannot_read_another_employees_check_ins(
     client: TestClient, db_session: Session
 ) -> None:
     owner = _create_user(db_session, email="ac004b-owner@example.com", role="employee")
-    other = _create_user(db_session, email="ac004b-other@example.com", role="employee")
+    _create_user(db_session, email="ac004b-other@example.com", role="employee")
     goal = _make_goal(db_session, owner=owner)
     check_in = models.CheckIn(
         goal_id=goal.id, author_id=owner.id, note="confidential progress note"
@@ -127,7 +127,7 @@ def test_ac004_employee_cannot_see_another_employees_praise_in_their_own_receive
 ) -> None:
     sender = _create_user(db_session, email="ac004c-sender@example.com", role="employee")
     recipient = _create_user(db_session, email="ac004c-recipient@example.com", role="employee")
-    other = _create_user(db_session, email="ac004c-other@example.com", role="employee")
+    _create_user(db_session, email="ac004c-other@example.com", role="employee")
     praise = models.Praise(
         sender_id=sender.id, recipient_id=recipient.id, message="secret-praise-text"
     )
@@ -176,7 +176,7 @@ def test_ac005_manager_sees_own_direct_and_skip_level_report_goals(
 def test_ac005_manager_denied_goal_outside_reporting_line(
     client: TestClient, db_session: Session
 ) -> None:
-    manager = _create_user(db_session, email="ac005b-mgr@example.com", role="manager")
+    _create_user(db_session, email="ac005b-mgr@example.com", role="manager")
     outsider = _create_user(db_session, email="ac005b-outsider@example.com", role="employee")
     goal = _make_goal(db_session, owner=outsider)
     token = _login(client, "ac005b-mgr@example.com")
@@ -222,7 +222,7 @@ def test_ac006_executive_cannot_create_goal(client: TestClient, db_session: Sess
 
 
 def test_ac006_executive_cannot_update_goal(client: TestClient, db_session: Session) -> None:
-    executive = _create_user(db_session, email="ac006c-exec@example.com", role="executive")
+    _create_user(db_session, email="ac006c-exec@example.com", role="executive")
     employee = _create_user(db_session, email="ac006c-emp@example.com", role="employee")
     goal = _make_goal(db_session, owner=employee)
     token = _login(client, "ac006c-exec@example.com")
