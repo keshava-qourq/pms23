@@ -68,9 +68,7 @@ def test_no_account_enumeration_identical_response_known_and_unknown_email(
     user = _make_user(db_session)
 
     known = client.post("/auth/password-reset/request", json={"email": user.email})
-    unknown = client.post(
-        "/auth/password-reset/request", json={"email": "nobody@example.com"}
-    )
+    unknown = client.post("/auth/password-reset/request", json={"email": "nobody@example.com"})
 
     assert known.status_code == 202
     assert unknown.status_code == 202
@@ -95,9 +93,7 @@ def test_ac009_valid_token_updates_password_and_allows_immediate_login(
     db_session.refresh(user)
     assert verify_password(_STRONG_PASSWORD, user.password_hash)
 
-    login = client.post(
-        "/auth/login", json={"email": user.email, "password": _STRONG_PASSWORD}
-    )
+    login = client.post("/auth/login", json={"email": user.email, "password": _STRONG_PASSWORD})
     assert login.status_code == 200
 
 

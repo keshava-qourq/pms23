@@ -88,7 +88,8 @@ async def logout(payload: dict = Depends(get_token_payload)) -> Response:  # noq
     response_model=PasswordResetAccepted,
 )
 async def request_password_reset(
-    payload: PasswordResetRequest, db: Session = Depends(get_db)  # noqa: B008
+    payload: PasswordResetRequest,
+    db: Session = Depends(get_db),  # noqa: B008
 ) -> PasswordResetAccepted:
     """AC-008: on a registered, active email, creates a PasswordResetToken
     row holding only the token's hash and sends the plaintext token -- never
@@ -116,7 +117,8 @@ async def request_password_reset(
 
 @router.post("/password-reset/confirm", response_model=PasswordResetAccepted)
 async def confirm_password_reset(
-    payload: PasswordResetConfirmRequest, db: Session = Depends(get_db)  # noqa: B008
+    payload: PasswordResetConfirmRequest,
+    db: Session = Depends(get_db),  # noqa: B008
 ) -> PasswordResetAccepted:
     """AC-009/AC-010/NFR-003: only a token that is unused and unexpired can
     match; an expired, already-used or unknown token all land on the same
@@ -131,9 +133,7 @@ async def confirm_password_reset(
         .order_by(models.PasswordResetToken.created_at.desc())
         .all()
     )
-    matched = next(
-        (c for c in candidates if verify_password(payload.token, c.token_hash)), None
-    )
+    matched = next((c for c in candidates if verify_password(payload.token, c.token_hash)), None)
     if matched is None:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=_RESET_INVALID_MESSAGE)
 

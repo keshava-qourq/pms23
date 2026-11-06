@@ -24,9 +24,11 @@ describe("ResetPassword", () => {
   });
 
   it("[AC-009] reads the token from the URL, calls confirm, and routes to login on success", async () => {
-    const fetchMock = vi
-      .fn()
-      .mockResolvedValue(new Response(JSON.stringify({ detail: "Your password has been updated." }), { status: 200 }));
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ detail: "Your password has been updated." }), {
+        status: 200,
+      }),
+    );
     vi.stubGlobal("fetch", fetchMock);
 
     renderAt("/reset-password?token=abc123");
@@ -115,9 +117,7 @@ describe("ResetPassword", () => {
     await user.type(screen.getByLabelText(/confirm new password/i), "Different!2026");
     await user.click(screen.getByRole("button", { name: /set new password/i }));
 
-    expect(await screen.findByRole("alert")).toHaveTextContent(
-      "Those two passwords do not match.",
-    );
+    expect(await screen.findByRole("alert")).toHaveTextContent("Those two passwords do not match.");
     expect(fetchMock).not.toHaveBeenCalled();
   });
 });

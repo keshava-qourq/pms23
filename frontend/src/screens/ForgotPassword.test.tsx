@@ -12,7 +12,9 @@ describe("ForgotPassword", () => {
   });
 
   it("[AC-008] calls the request endpoint and shows the same confirmation for a registered email", async () => {
-    const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify({ detail: "ok" }), { status: 202 }));
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue(new Response(JSON.stringify({ detail: "ok" }), { status: 202 }));
     vi.stubGlobal("fetch", fetchMock);
 
     render(
@@ -35,7 +37,9 @@ describe("ForgotPassword", () => {
   });
 
   it("[AC-008] shows the same confirmation message for an unregistered email", async () => {
-    const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify({ detail: "ok" }), { status: 202 }));
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue(new Response(JSON.stringify({ detail: "ok" }), { status: 202 }));
     vi.stubGlobal("fetch", fetchMock);
 
     render(
