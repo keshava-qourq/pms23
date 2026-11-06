@@ -1,0 +1,68 @@
+{
+  "key": {
+    "app_design_id": "0f91a405-613f-4ee5-b3e4-718c9dec9b06",
+    "app_design_version": 1,
+    "architecture_document_id": "98cb333f-ac72-448e-9c4d-c825453b3cb2",
+    "architecture_version": 1
+  },
+  "outcome": "prepared",
+  "packages": [
+    {
+      "ecosystem": "pypi",
+      "installed_version": "2.15.1",
+      "name": "pyjwt",
+      "status": "installed",
+      "version": ">=2.8"
+    },
+    {
+      "ecosystem": "pypi",
+      "installed_version": "1.7.4",
+      "name": "passlib",
+      "status": "installed",
+      "version": ">=1.7"
+    },
+    {
+      "ecosystem": "pypi",
+      "installed_version": "5.0.0",
+      "name": "bcrypt",
+      "status": "installed",
+      "version": ">=4.1"
+    },
+    {
+      "ecosystem": "pypi",
+      "installed_version": "0.28.0",
+      "name": "arq",
+      "status": "installed",
+      "version": ">=0.26"
+    },
+    {
+      "ecosystem": "pypi",
+      "installed_version": "5.3.1",
+      "name": "redis",
+      "status": "installed",
+      "version": ">=5.0"
+    },
+    {
+      "ecosystem": "pypi",
+      "installed_version": "6.12.5",
+      "name": "sendgrid",
+      "status": "installed",
+      "version": ">=6.11"
+    },
+    {
+      "ecosystem": "npm",
+      "error": "already provided by the scaffold",
+      "name": "react-router-dom",
+      "status": "skipped",
+      "version": ">=6.26"
+    },
+    {
+      "ecosystem": "npm",
+      "error": "already provided by the scaffold",
+      "name": "recharts",
+      "status": "skipped",
+      "version": ">=2.12"
+    }
+  ],
+  "prepared_by_run": "2892f505-205a-463e-bda9-929247bddb62"
+}
