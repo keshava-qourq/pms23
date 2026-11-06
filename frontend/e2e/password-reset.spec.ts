@@ -10,7 +10,6 @@
 import { expect, test } from "@playwright/test";
 
 import {
-  E2E_PASSWORD,
   expireLatestResetToken,
   markLatestResetTokenUsed,
   requestResetToken,
@@ -71,9 +70,7 @@ test("[AC-009] sets a new password from a valid link and signs in with it", asyn
 });
 
 // AC-010/NFR-003: an expired link is rejected and prompts for a new one.
-test("[AC-010] an expired link is rejected and prompts to request a new link", async ({
-  page,
-}) => {
+test("[AC-010] an expired link is rejected and prompts to request a new link", async ({ page }) => {
   const token = requestResetToken(EXPIRED_EMAIL);
   expireLatestResetToken(EXPIRED_EMAIL);
 
