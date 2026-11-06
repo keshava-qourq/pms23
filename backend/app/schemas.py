@@ -41,9 +41,18 @@ class LoginRequest(BaseModel):
     password: str
 
 
+class LoginUser(BaseModel):
+    id: uuid.UUID
+    name: str
+    email: str
+    role: Role
+
+
 class LoginResponse(BaseModel):
     access_token: str
-    role: Role
+    token_type: str = "bearer"
+    user: LoginUser
+    home_route: str
 
 
 class PasswordResetRequest(BaseModel):

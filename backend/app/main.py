@@ -13,24 +13,20 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app import models  # noqa: F401 -- imported so the tables register before create_all
-from app.database import Base, engine
 from app.routers import ALL_ROUTERS
 from app.services import configured_services
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
-    """The scaffold ships no migrations, so the tables are created from the models
-    when the application starts. Replace this with Alembic before anything holds data
-    worth keeping.
+    """Schema changes come from Alembic migrations (see backend/alembic/), run
+    before the application starts -- never from `create_all` at runtime.
 
     This runs on startup and not at import, so importing the application never opens a
     connection. A test can therefore point `get_db` at a database of its own, and a
     deployment whose `DATABASE_URL` names a server that is not up fails where you can
     read the error, not while pytest collects the files.
     """
-    Base.metadata.create_all(bind=engine)
     yield
 
 

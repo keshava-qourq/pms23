@@ -1,4 +1,5 @@
-import { NavLink, Navigate, Outlet, Route, Routes } from "react-router-dom";
+import * as React from "react";
+import { NavLink, Navigate, Outlet, Route, Routes, useNavigate } from "react-router-dom";
 
 import Login from "@/screens/Login";
 import Dashboard from "@/screens/Dashboard";
@@ -6,6 +7,7 @@ import GoalDetail from "@/screens/GoalDetail";
 import Team from "@/screens/Team";
 import Praise from "@/screens/Praise";
 import Employees from "@/screens/Employees";
+import { apiFetch, clearSessionToken, getSessionToken } from "@/lib/api";
 
 const navLinkClass = ({ isActive }: { isActive: boolean }) =>
   [
@@ -13,9 +15,29 @@ const navLinkClass = ({ isActive }: { isActive: boolean }) =>
     isActive ? "bg-[var(--brand-hover)] text-[var(--brand-fg)]" : "text-[var(--brand-fg-muted)]",
   ].join(" ");
 
+// Unauthenticated access to any screen behind sign-in sends the visitor back
+// to /login; reloading there never restores a session nobody has a token for.
+function RequireAuth({ children }: { children: React.ReactElement }) {
+  const token = getSessionToken();
+  if (!token) return <Navigate to="/login" replace />;
+  return children;
+}
+
 // The screens behind sign-in render inside the side menu. Login and the other
 // screens shown before sign-in render on their own, with no menu around them.
 function Shell() {
+  const navigate = useNavigate();
+
+  const handleSignOut = async () => {
+    try {
+      await apiFetch("/auth/logout", { method: "POST" });
+    } catch {
+      // Logout still proceeds locally even if the server call fails.
+    }
+    clearSessionToken();
+    navigate("/login", { replace: true });
+  };
+
   return (
     <div className="flex min-h-screen">
       <aside
@@ -48,6 +70,13 @@ function Shell() {
             {"People admin"}
           </NavLink>
         </nav>
+        <button
+          type="button"
+          onClick={handleSignOut}
+          className="mt-4 block w-full rounded-[var(--brand-radius)] px-3 py-2 text-left text-sm font-medium text-[var(--brand-fg-muted)] transition-colors hover:bg-[var(--brand-hover)] hover:text-[var(--brand-fg)]"
+        >
+          {"Sign out"}
+        </button>
       </aside>
       <main className="flex-1 overflow-auto">
         <Outlet />
@@ -60,7 +89,13 @@ export default function App() {
   return (
     <Routes>
       <Route path="/login" element={<Login />} />
-      <Route element={<Shell />}>
+      <Route
+        element={
+          <RequireAuth>
+            <Shell />
+          </RequireAuth>
+        }
+      >
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/goal-detail" element={<GoalDetail />} />
         <Route path="/team" element={<Team />} />
