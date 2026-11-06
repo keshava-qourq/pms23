@@ -58,9 +58,7 @@ def _descendant_chain_ids(db: Session, start_id: uuid.UUID) -> set[uuid.UUID]:
     recursive query, not a loop over every employee (NFR-009)."""
     user = models.User
     base = (
-        select(user.id)
-        .where(user.manager_id == start_id)
-        .cte("descendant_chain", recursive=True)
+        select(user.id).where(user.manager_id == start_id).cte("descendant_chain", recursive=True)
     )
     walked = base.alias()
     recursive = select(user.id).join(walked, user.manager_id == walked.c.id)

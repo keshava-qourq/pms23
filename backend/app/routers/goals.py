@@ -73,9 +73,7 @@ async def create_goal(
             .first()
         )
         if objective is None:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND, detail="Objective not found"
-            )
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Objective not found")
 
     goal = models.Goal(
         owner_id=owner_id,
@@ -105,9 +103,7 @@ async def list_goals(
     query = db.query(models.Goal)
     if ids is not None:
         query = query.filter(models.Goal.owner_id.in_(ids))
-    return (
-        query.order_by(models.Goal.created_at.desc()).offset(offset).limit(limit).all()
-    )
+    return query.order_by(models.Goal.created_at.desc()).offset(offset).limit(limit).all()
 
 
 @router.put("/goals/{id}", response_model=GoalRead)
@@ -128,9 +124,7 @@ async def update_goal(
             .first()
         )
         if objective is None:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND, detail="Objective not found"
-            )
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Objective not found")
         goal.parent_objective_id = payload.parent_objective_id
     if payload.title is not None:
         goal.title = payload.title
