@@ -32,21 +32,26 @@ export default defineConfig({
   webServer: runAgainstDeployment
     ? undefined
     : [
-      {
-        // The generated backend defaults to a local SQLite database (see
-        // backend/app/database.py), so the API runs end to end with no database
-        // server to stand up. Its packages are in backend/.venv (installed before the run).
-        command:
-          "cd ../backend && .venv/bin/python -m uvicorn app.main:app --host 127.0.0.1 --port 8000",
-        url: "http://127.0.0.1:8000/health",
-        reuseExistingServer: !process.env.CI,
-        timeout: 180_000,
-      },
-      {
-        command: "npm run build && npm run preview -- --port 4173 --host 127.0.0.1",
-        url: "http://127.0.0.1:4173",
-        reuseExistingServer: !process.env.CI,
-        timeout: 180_000,
-      },
-    ],
+        {
+          // The generated backend defaults to a local SQLite database (see
+          // backend/app/database.py), so the API runs end to end with no database
+          // server to stand up. Its packages are in backend/.venv (installed before the run).
+          //
+          // ALLOWED_ORIGINS: the backend's CORS allowlist defaults to the Vite dev
+          // server's origin (5173), but this suite serves the built app with
+          // `vite preview` on 4173 -- without this, every browser-side call from the
+          // e2e-driven app is blocked by CORS and every sign-in silently fails.
+          command:
+            "cd ../backend && ALLOWED_ORIGINS=http://127.0.0.1:4173,http://localhost:4173 .venv/bin/python -m uvicorn app.main:app --host 127.0.0.1 --port 8000",
+          url: "http://127.0.0.1:8000/health",
+          reuseExistingServer: !process.env.CI,
+          timeout: 180_000,
+        },
+        {
+          command: "npm run build && npm run preview -- --port 4173 --host 127.0.0.1",
+          url: "http://127.0.0.1:4173",
+          reuseExistingServer: !process.env.CI,
+          timeout: 180_000,
+        },
+      ],
 });
