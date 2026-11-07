@@ -36,6 +36,7 @@ const {
   Calendar,
   Clock,
   Download,
+  ArrowLeft,
   AlertCircle,
   CheckCircle,
 } = Icons;
@@ -654,6 +655,14 @@ export default function Screen() {
             >
               <Download className="h-4 w-4" aria-hidden="true" />
               {loading ? "Refreshing…" : "Refresh"}
+            </Button>
+            <Button
+              onClick={() => navigate("login")}
+              className={`inline-flex h-11 items-center gap-2 rounded-[6px] px-4 text-sm transition-opacity hover:opacity-80 ${focusCls}`}
+              style={ghostBtn}
+            >
+              <ArrowLeft className="h-4 w-4" aria-hidden="true" />
+              Sign out
             </Button>
             <Button
               onClick={() => navigate("goal-detail")}

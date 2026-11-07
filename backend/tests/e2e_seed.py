@@ -25,7 +25,6 @@ from sqlalchemy.orm import Session  # noqa: E402
 
 from app import models  # noqa: E402
 from app.security import hash_password  # noqa: E402
-from tests.e2e_migrate import ensure_schema  # noqa: E402
 
 E2E_PASSWORD = "Str0ng!PassE2E"
 
@@ -60,33 +59,10 @@ E2E_USERS = [
         "role": "employee",
         "is_active": False,
     },
-    # Dedicated to the password-reset e2e suite (US-003-3), so a token
-    # created or spent in that suite never collides with the login suite's
-    # fixtures. Each run re-seeds the password hash too, so a password this
-    # suite changes is put back before the next run reads it.
-    {
-        "email": "e2e.resetflow@example.com",
-        "name": "E2E Reset Flow",
-        "role": "employee",
-        "is_active": True,
-    },
-    {
-        "email": "e2e.resetflow.expired@example.com",
-        "name": "E2E Reset Flow Expired",
-        "role": "employee",
-        "is_active": True,
-    },
-    {
-        "email": "e2e.resetflow.used@example.com",
-        "name": "E2E Reset Flow Used",
-        "role": "employee",
-        "is_active": True,
-    },
 ]
 
 
 def main() -> None:
-    ensure_schema()
     database_url = os.environ["DATABASE_URL"]
     engine = create_engine(database_url, pool_pre_ping=True, future=True)
     password_hash = hash_password(E2E_PASSWORD)

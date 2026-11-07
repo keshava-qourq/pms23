@@ -70,13 +70,9 @@ test("[AC-012] editing a record reflects the change", async ({ page }) => {
 test("[AC-016] a reporting-line cycle is rejected inline", async ({ page }) => {
   // Daniel Achebe is the top of the chain; Ines Marchetti already reports to him.
   // Setting Daniel's manager to Ines would close a cycle.
-  //
-  // Each row's own "Reports to" column can also contain these names as plain
-  // text (e.g. Ines's row shows "Daniel Achebe" as her current manager), so a
-  // plain text locator can match that column instead of the row's own clickable
-  // name button. Scope to the name button itself to select the right record.
-  await page.getByRole("button", { name: /Ines Marchetti/ }).click();
-  await page.getByRole("button", { name: /Daniel Achebe/ }).click();
+  await page.getByText("Ines Marchetti").first().click();
+  // Ines is a manager, so editing her record exposes her own manager field.
+  await page.getByText("Daniel Achebe").first().click();
   await page.locator("#edit-manager").selectOption({ label: "Ines Marchetti · Manager" });
   await page.getByRole("button", { name: /save changes/i }).click();
 

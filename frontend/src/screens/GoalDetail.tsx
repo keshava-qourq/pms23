@@ -1,5 +1,5 @@
 // @ts-nocheck -- generated from the approved design under its JS runtime contract; not hand-written TypeScript.
- 
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import React from "react";
 
 import * as UI from "@/lib/ui";
@@ -29,6 +29,8 @@ const {
   Stat,
   Empty,
 } = UI;
+
+const { Check, Filter } = Icons;
 
 const SURFACE = "#1b2722";
 const SURFACE_2 = "#213029";
@@ -191,10 +193,9 @@ export default function Screen() {
   };
   React.useEffect(() => {
     const t = setTimeout(() => setPhase("ready"), 620);
-    const activeTimers = timers.current;
     return () => {
       clearTimeout(t);
-      activeTimers.forEach(clearTimeout);
+      timers.current.forEach(clearTimeout);
     };
   }, []);
 
