@@ -25,6 +25,7 @@ from sqlalchemy.orm import Session  # noqa: E402
 
 from app import models  # noqa: E402
 from app.security import hash_password  # noqa: E402
+from tests.e2e_migrate import ensure_schema  # noqa: E402
 
 E2E_PASSWORD = "Str0ng!PassE2E"
 
@@ -85,6 +86,7 @@ E2E_USERS = [
 
 
 def main() -> None:
+    ensure_schema()
     database_url = os.environ["DATABASE_URL"]
     engine = create_engine(database_url, pool_pre_ping=True, future=True)
     password_hash = hash_password(E2E_PASSWORD)
