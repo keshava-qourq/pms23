@@ -143,7 +143,16 @@ describe("GoalDetail screen", () => {
 
   it("[AC-023] a manager can pick an owner from GET /employees/{id}/reports and the goal shows that person as owner", async () => {
     setSessionUser({ id: "u-mgr", name: "Dilan Okonkwo", email: "d@x.com", role: "manager" });
-    const report = { id: "u-rep", name: "Ade Balogun", email: "a@x.com", role: "employee", manager_id: "u-mgr", is_active: true, created_at: "x", updated_at: "x" };
+    const report = {
+      id: "u-rep",
+      name: "Ade Balogun",
+      email: "a@x.com",
+      role: "employee",
+      manager_id: "u-mgr",
+      is_active: true,
+      created_at: "x",
+      updated_at: "x",
+    };
     const created = goal({ owner_id: "u-rep" });
     const fetchMock = vi.fn((url: string, init?: RequestInit) => {
       if (init?.method === "POST") return Promise.resolve(jsonResponse(created, 201));
@@ -200,7 +209,14 @@ describe("GoalDetail screen", () => {
 
   it("[AC-025/AC-026] the parent objective select is populated from GET /objectives and the linked parent is displayed on save", async () => {
     setSessionUser({ id: "u-self", name: "Priya Raghunathan", email: "p@x.com", role: "employee" });
-    const objective = { id: "obj-1", title: "Grow retention", description: null, level: "Company", owner_id: null, created_at: "x" };
+    const objective = {
+      id: "obj-1",
+      title: "Grow retention",
+      description: null,
+      level: "Company",
+      owner_id: null,
+      created_at: "x",
+    };
     const created = goal({ parent_objective_id: "obj-1" });
     const fetchMock = vi.fn((url: string, init?: RequestInit) => {
       if (init?.method === "POST") return Promise.resolve(jsonResponse(created, 201));

@@ -52,8 +52,9 @@ test("[AC-021] submitting without a title shows the inline prompt", async ({ pag
   await page.locator("#goal-due-date").fill("2026-12-31");
   await page.getByRole("button", { name: /create goal/i }).click();
 
-  await expect(page.locator("#goal-title").locator("xpath=following-sibling::p[@role='alert']"))
-    .toContainText(/title/i);
+  await expect(
+    page.locator("#goal-title").locator("xpath=following-sibling::p[@role='alert']"),
+  ).toContainText(/title/i);
 });
 
 // AC-021: submitting without a due date shows the inline prompt.
@@ -127,9 +128,7 @@ test("[AC-023] a manager creates a goal for a direct report and sees them as own
 });
 
 // AC-025/AC-026: a goal is saved with and without a parent objective.
-test("[AC-026] a goal with no parent objective saves and lists as standalone", async ({
-  page,
-}) => {
+test("[AC-026] a goal with no parent objective saves and lists as standalone", async ({ page }) => {
   await signInAs(page, "employee");
   await page.goto("/goal-detail");
 

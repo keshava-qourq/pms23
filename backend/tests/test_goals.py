@@ -19,7 +19,6 @@ through that endpoint -- `POST /goals`/`PUT /goals/{id}` read
 import datetime
 import uuid
 
-import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
@@ -196,9 +195,7 @@ def test_ac023_manager_created_goal_appears_in_reports_goals_with_owner_id(
     client: TestClient, db_session: Session
 ) -> None:
     manager = _create_user(db_session, email="ac023-mgr@example.com", role="manager")
-    report = _create_user(
-        db_session, email="ac023-report@example.com", manager_id=manager.id
-    )
+    report = _create_user(db_session, email="ac023-report@example.com", manager_id=manager.id)
     manager_token = _login(client, "ac023-mgr@example.com")
 
     payload = dict(_GOAL_PAYLOAD)
@@ -257,9 +254,7 @@ def test_ac025_goal_links_to_existing_objective_and_parent_is_returned(
     assert response.json()["parent_objective_id"] == str(objective.id)
 
 
-def test_ac025_unknown_objective_id_returns_404(
-    client: TestClient, db_session: Session
-) -> None:
+def test_ac025_unknown_objective_id_returns_404(client: TestClient, db_session: Session) -> None:
     _create_user(db_session, email="ac025b-emp@example.com")
     token = _login(client, "ac025b-emp@example.com")
 

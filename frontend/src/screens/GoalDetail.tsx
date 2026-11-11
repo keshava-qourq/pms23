@@ -357,11 +357,7 @@ export default function Screen() {
               </div>
 
               <div>
-                <Label
-                  htmlFor="goal-description"
-                  style={label}
-                  className="block text-xs uppercase"
-                >
+                <Label htmlFor="goal-description" style={label} className="block text-xs uppercase">
                   Description
                 </Label>
                 <Textarea
@@ -374,7 +370,11 @@ export default function Screen() {
               </div>
 
               <div>
-                <Label htmlFor="goal-target-metric" style={label} className="block text-xs uppercase">
+                <Label
+                  htmlFor="goal-target-metric"
+                  style={label}
+                  className="block text-xs uppercase"
+                >
                   Target metric
                 </Label>
                 <Input
@@ -412,7 +412,11 @@ export default function Screen() {
                 </div>
 
                 <div>
-                  <Label htmlFor="goal-progress-type" style={label} className="block text-xs uppercase">
+                  <Label
+                    htmlFor="goal-progress-type"
+                    style={label}
+                    className="block text-xs uppercase"
+                  >
                     Progress type
                   </Label>
                   <Select
@@ -503,7 +507,9 @@ export default function Screen() {
                     <dt className="inline font-medium" style={{ color: brand.primaryColor }}>
                       Parent objective:{" "}
                     </dt>
-                    <dd className="inline">{parentObjectiveTitle(savedGoal.parent_objective_id)}</dd>
+                    <dd className="inline">
+                      {parentObjectiveTitle(savedGoal.parent_objective_id)}
+                    </dd>
                   </div>
                 </dl>
               </div>
