@@ -32,9 +32,7 @@ test.beforeEach(async ({ page }) => {
 
 // AC-017: exporting a person's data produces a downloadable export, named
 // as an attachment for that record.
-test("[AC-017] exports a person's data and shows the ready-to-download file", async ({
-  page,
-}) => {
+test("[AC-017] exports a person's data and shows the ready-to-download file", async ({ page }) => {
   await page.getByText("Daniel Achebe").first().click();
   await page.getByRole("button", { name: /export this person's data/i }).click();
 

@@ -437,7 +437,10 @@ export default function Screen() {
                     style={field}
                   />
                 </div>
-                <label className="flex items-center gap-2 text-sm" style={{ color: brand.primaryColor }}>
+                <label
+                  className="flex items-center gap-2 text-sm"
+                  style={{ color: brand.primaryColor }}
+                >
                   <input
                     type="checkbox"
                     checked={confirmDelete}
@@ -540,10 +543,7 @@ export default function Screen() {
                   description="Apply filters to load the audit trail."
                 />
               ) : auditEntries.length === 0 ? (
-                <Empty
-                  title="No audit entries"
-                  description="Nothing matches these filters."
-                />
+                <Empty title="No audit entries" description="Nothing matches these filters." />
               ) : (
                 <Table>
                   <THead>
