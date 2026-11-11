@@ -13,7 +13,7 @@ import uuid
 from datetime import date, datetime
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 Role = Literal["employee", "manager", "hr_admin", "executive"]
 ProgressType = Literal["percent", "status"]
@@ -62,6 +62,19 @@ class PasswordResetRequest(BaseModel):
 class PasswordResetConfirmRequest(BaseModel):
     token: str
     new_password: str
+
+    @field_validator("new_password")
+    @classmethod
+    def _password_rules(cls, value: str) -> str:
+        if len(value) < 8:
+            raise ValueError("Password must be at least 8 characters long")
+        if not any(c.isupper() for c in value):
+            raise ValueError("Password must contain an uppercase letter")
+        if not any(c.islower() for c in value):
+            raise ValueError("Password must contain a lowercase letter")
+        if not any(c.isdigit() for c in value):
+            raise ValueError("Password must contain a digit")
+        return value
 
 
 # ---- employees (users) --------------------------------------------------------
@@ -185,6 +198,13 @@ class CheckInRead(BaseModel):
 class PraiseCreate(BaseModel):
     recipient_id: uuid.UUID
     message: str
+
+    @field_validator("message")
+    @classmethod
+    def _message_not_blank(cls, value: str) -> str:
+        if not value.strip():
+            raise ValueError("Message must not be empty")
+        return value
 
 
 class PraiseRead(BaseModel):
