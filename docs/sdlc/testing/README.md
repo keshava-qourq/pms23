@@ -11,10 +11,6 @@ An automated check run (type run_checks) completed successfully with all 5 of 5 
 
 Input reports: run_checks (ticket=None): status=succeeded, detail=5/5 checks passed. No further detail is given on what the 5 checks validate, who triggered them, or when relative to the sprint/ticket cycle.
 
-- ⚠ No ticket is associated with this run, so it cannot be linked to a specific requirement (US-001..US-017).
-- ⚠ Nature/content of the 5 checks (unit, lint, static analysis, etc.) is not specified in the input.
-- ⚠ No timestamp beyond today's reporting date was provided for when the run actually occurred.
-
 ### TEST-E2E-2026-11-06 · draft · source: testing:e2e
 
 _2026-11-06_
@@ -22,7 +18,4 @@ _2026-11-06_
 The latest end-to-end test run reports a 'no_tests' result: 0 of 0 tests executed, against the sandbox target environment.
 
 Input reports: Latest E2E run: no_tests, 0/0 passed, target sandbox. This indicates no E2E test cases currently exist or were collected for execution in this run; it is not a pass or fail of functional behavior, simply an absence of executed tests.
-
-- ⚠ No E2E test cases exist yet for sandbox target, so no functional/requirement-level validation (US-001..US-017) can be confirmed from this run.
-- ⚠ Unclear whether E2E tests are planned but not yet written, or whether the suite is misconfigured and failing to discover tests.
 <!-- sdlc:auto:end narrative -->

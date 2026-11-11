@@ -5,7 +5,7 @@
 <!-- sdlc:auto:start overview -->
 performance management system
 
-**Documentation version:** v11
+**Documentation version:** v12
 <!-- sdlc:auto:end overview -->
 
 ## Contents
@@ -15,7 +15,8 @@ performance management system
 |---|---|
 | [Requirements](requirements/README.md) | v2 approved |
 | [Architecture](architecture/README.md) | 16 entries |
-| [Development](development/README.md) | 9 entries |
+| [Planning](planning/README.md) | 0 entries |
+| [Development](development/README.md) | 5 entries |
 | [Testing](testing/README.md) | 2 entries |
 | [Deployment](deployment/README.md) | 0 entries |
 | [Maintenance](maintenance/README.md) | 0 entries |
@@ -26,12 +27,12 @@ performance management system
 | [Developer guide](development/developer-guide.md) | generated |
 | [API reference](development/api-reference.md) | 27 routes |
 | [Test report](testing/test-report.md) | no_tests |
-| [Tests](testing/test-cases.md) | 117 tests |
+| [Tests](testing/test-cases.md) | 171 tests |
 | [Deployment guide](deployment/deployment-guide.md) | not deployed yet |
 | [Runbook](deployment/runbook.md) | not deployed yet |
 | [Release notes](deployment/release-notes.md) | 0 releases |
 | [Traceability matrix](traceability-matrix.md) | 17 requirements |
-| [Changelog](CHANGELOG.md) | 11 versions |
+| [Changelog](CHANGELOG.md) | 12 versions |
 <!-- sdlc:auto:end contents -->
 
 ## Open gaps

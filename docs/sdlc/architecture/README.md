@@ -11,9 +11,6 @@ PMS23 is approved (v1) as a lightweight internal performance management system f
 
 Overall architecture: responsive React 19 SPA talking to FastAPI 0.115 REST API; PostgreSQL 16 holds relational HR/performance data (users, reporting lines, goals cascaded from objectives, check-ins, praise, notifications, audit trail). Redis serves two roles: cache for executive/HR analytics dashboards, and queue backing a background worker for due-date/check-in reminders. Emails go through SendGrid; on email failure the in-app notification is still created and the failure is logged. RBAC (employee, manager, HR admin, executive read-only) gates every endpoint. Hosted in a single AWS region to satisfy data-residency and GDPR-style obligations (export, delete/anonymise, audit).
 
-- ⚠ No named approver or approval date recorded for this architecture version.
-- ⚠ Input does not map architecture elements to specific requirement IDs (US-001..US-016), so traceability from architecture back to requirements cannot be established beyond general inference.
-
 ### ARCH-001 · approved · source: architecture:components:frontend
 
 Web App (SPA) built in React 19 is the single responsive UI for all roles, covering login, goal trackers, dashboards, check-ins, praise, and executive analytics.
@@ -49,8 +46,6 @@ Component: cache, Redis 7. Caches aggregated dashboard/team-view results to keep
 Job Queue (Redis 7) holds scheduled and batched reminder jobs so email/notification work runs outside the request path.
 
 Component: queue, Redis 7. Separate logical role from the dashboard cache (same Redis 7 technology) dedicated to holding scheduled/batched reminder jobs for the worker.
-
-- ⚠ Input does not clarify whether cache and queue are the same Redis instance/cluster or physically separate ElastiCache deployments.
 
 ### ARCH-007 · approved · source: architecture:components:email
 

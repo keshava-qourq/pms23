@@ -25,8 +25,6 @@ Email: SendGrid (SaaS, env var SENDGRID_API_KEY) — drives deadline/check-in/fe
 
 **Related:** US-012, US-013, US-014
 
-- ⚠ Email reminders (US-012) depend on SENDGRID_API_KEY being provisioned before go-live; provisioning status not stated in this input.
-
 ### US-001 · draft · source: requirements:US-001
 
 Critical story: any registered user logs in with email/password and is taken to a role-appropriate home screen; incorrect credentials show a generic error; logout ends the session.
@@ -34,9 +32,6 @@ Critical story: any registered user logs in with email/password and is taken to 
 Priority: critical. Epic: EPIC-001 Access, Authentication & RBAC. AC-001: correct credentials authenticate and route to role-appropriate home screen. AC-002: incorrect password or unknown email is denied with a generic error that does not reveal which field was wrong. AC-003: logout ends the session, requiring re-login. Epic-level assumptions: four roles (employee, manager, HR admin, executive/leadership read-only analytics) assumed, not independently verified; email/password authentication only, no SSO or HRIS directory sync in first release; no payment/billing/subscription functionality exists (internal single-org tool).
 
 **Related:** EPIC-001, US-002, US-003, US-017
-
-- ⚠ Four-role model is an epic-level assumption, not independently verified by the product owner.
-- ⚠ Email/password-only authentication (no SSO/HRIS sync) is an assumption for the first release, not a confirmed decision.
 
 ### US-002 · draft · source: requirements:US-002
 
@@ -53,8 +48,6 @@ Medium-priority story: users can reset a forgotten password via a time-limited e
 Priority: medium. Epic: EPIC-001. AC-008: requesting a reset for a registered email sends a time-limited reset link. AC-009: setting a new password via a valid, unexpired link that meets password rules updates the password and allows login. AC-010: an expired or already-used reset link is rejected and the user is prompted to request a new one.
 
 **Related:** EPIC-001, US-001
-
-- ⚠ "Password rules" referenced in AC-009 are not defined in this input (e.g. minimum length/complexity).
 
 ### US-017 · draft · source: requirements:US-017
 
@@ -88,9 +81,6 @@ Priority: medium. Epic: EPIC-002. AC-017: requesting an export produces a file w
 
 **Related:** EPIC-002, US-004, US-005
 
-- ⚠ Jurisdiction/regulatory regime (e.g. GDPR applicability) is assumed, not confirmed — region unspecified.
-- ⚠ No specific data-retention period is defined for historical goals/praise kept after deactivation or deletion.
-
 ### US-007 · draft · source: requirements:US-007
 
 Critical story: an employee creates a SMART/OKR-style goal with title, description, measurable target and due date.
@@ -115,8 +105,6 @@ Priority: medium. Epic: EPIC-003. AC-025: linking a goal to an existing higher-l
 
 **Related:** EPIC-003, US-007, US-008
 
-- ⚠ Who creates/owns the higher-level manager or company objectives being linked to is not specified in this input.
-
 ### US-010 · draft · source: requirements:US-010
 
 High-priority story: goal owners update progress as a percentage (0-100) or a status value, with completion recorded when done.
@@ -140,9 +128,6 @@ High-priority story: goal owners receive email and in-app reminders for approach
 Priority: high. Epic: EPIC-004. AC-032: when the reminder schedule runs for an approaching due date or overdue check-in, the owner receives both an email and an in-app notification. AC-033: if the email-sending service credential is not configured, the in-app notification is still created and the email failure is logged. AC-034: unread in-app notifications can be viewed and dismissed. Assumption: email reminders require an email-sending service credential (e.g. SendGrid/SMTP API key) to be provisioned; in-app notifications are provided regardless.
 
 **Related:** EPIC-004, US-010, US-011
-
-- ⚠ Depends on SENDGRID_API_KEY being provisioned (see REQ-SERVICES-001); provisioning status not confirmed in this input.
-- ⚠ Exact reminder schedule/cadence (how long before due date, how often overdue check-ins nudge) is not specified.
 
 ### US-013 · draft · source: requirements:US-013
 
