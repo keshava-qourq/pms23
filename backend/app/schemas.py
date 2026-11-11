@@ -102,13 +102,6 @@ class EmployeeRead(BaseModel):
     updated_at: datetime
 
 
-class EmployeeList(BaseModel):
-    items: list[EmployeeRead]
-    total: int
-    skip: int
-    limit: int
-
-
 # ---- objectives ---------------------------------------------------------------
 
 
