@@ -227,6 +227,7 @@ class AuditLogEntry(BaseModel):
 
     id: uuid.UUID
     actor_id: uuid.UUID | None = None
+    actor_name: str | None = None
     entity_type: str
     entity_id: uuid.UUID
     action: str
