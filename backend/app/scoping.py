@@ -50,3 +50,31 @@ def is_in_reporting_line(db: Session, manager_id: uuid.UUID, employee_id: uuid.U
     directly or transitively, in the reporting line."""
     chain = _ancestor_chain_ids(db, employee_id)
     return manager_id in chain
+
+
+def _descendant_chain_ids(db: Session, start_id: uuid.UUID) -> set[uuid.UUID]:
+    """Everyone below `start_id` in the reporting line -- direct and
+    skip-level reports -- found by walking `manager_id` downward. Mirrors
+    `_ancestor_chain_ids` but in the other direction."""
+    user = models.User
+    base = (
+        select(user.id, user.manager_id)
+        .where(user.manager_id == start_id)
+        .cte("descendant_chain", recursive=True)
+    )
+    walked = base.alias()
+    recursive = select(user.id, user.manager_id).join(walked, user.manager_id == walked.c.id)
+    cte = base.union_all(recursive)
+    rows = db.execute(select(cte.c.id)).all()
+    return {row.id for row in rows}
+
+
+def visible_owner_ids(db: Session, user: models.User) -> set[uuid.UUID] | None:
+    """The set of owner ids `user` may see goals for, or None meaning "every
+    owner" (hr_admin). A manager sees themselves and every direct and
+    skip-level report; an employee or executive sees only themselves."""
+    if user.role == "hr_admin":
+        return None
+    if user.role == "manager":
+        return {user.id} | _descendant_chain_ids(db, user.id)
+    return {user.id}
