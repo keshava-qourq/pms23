@@ -128,7 +128,8 @@ def test_ac018_personal_data_deletion_anonymises_and_writes_audit_row(
     goal = _make_goal(db_session, owner=employee, title="Surviving goal")
     original_email = employee.email
 
-    response = client.delete(
+    response = client.request(
+        "DELETE",
         f"/employees/{employee.id}/personal-data",
         headers=_headers(hr_admin),
         json={"reason": "Approved GDPR erasure request DPR-0099"},
@@ -160,8 +161,11 @@ def test_ac018_missing_reason_returns_422(client: TestClient, db_session: Sessio
     hr_admin = _create_user(db_session, email="hr-ac018b@example.com", role="hr_admin")
     employee = _create_user(db_session, email="no-reason@example.com", role="employee")
 
-    response = client.delete(
-        f"/employees/{employee.id}/personal-data", headers=_headers(hr_admin), json={}
+    response = client.request(
+        "DELETE",
+        f"/employees/{employee.id}/personal-data",
+        headers=_headers(hr_admin),
+        json={},
     )
 
     assert response.status_code == 422
@@ -170,7 +174,8 @@ def test_ac018_missing_reason_returns_422(client: TestClient, db_session: Sessio
 def test_ac018_unknown_employee_id_returns_404(client: TestClient, db_session: Session) -> None:
     hr_admin = _create_user(db_session, email="hr-ac018c@example.com", role="hr_admin")
 
-    response = client.delete(
+    response = client.request(
+        "DELETE",
         f"/employees/{uuid.uuid4()}/personal-data",
         headers=_headers(hr_admin),
         json={"reason": "no such employee"},
@@ -186,7 +191,8 @@ def test_rbac_delete_personal_data_is_hr_admin_only(
     caller = _create_user(db_session, email=f"delete-caller-{role}@example.com", role=role)
     employee = _create_user(db_session, email=f"delete-target-{role}@example.com", role="employee")
 
-    response = client.delete(
+    response = client.request(
+        "DELETE",
         f"/employees/{employee.id}/personal-data",
         headers=_headers(caller),
         json={"reason": "should be forbidden"},
@@ -280,9 +286,7 @@ def test_ac019_date_filter_narrows_result(client: TestClient, db_session: Sessio
     )
 
     future_date = (datetime.date.today() + datetime.timedelta(days=1)).isoformat()
-    response = client.get(
-        "/audit-log", headers=_headers(hr_admin), params={"from": future_date}
-    )
+    response = client.get("/audit-log", headers=_headers(hr_admin), params={"from": future_date})
 
     assert response.status_code == 200
     entries = response.json()
@@ -290,7 +294,9 @@ def test_ac019_date_filter_narrows_result(client: TestClient, db_session: Sessio
 
 
 @pytest.mark.parametrize("role", ["employee", "manager", "executive"])
-def test_rbac_audit_log_is_hr_admin_only(client: TestClient, db_session: Session, role: str) -> None:
+def test_rbac_audit_log_is_hr_admin_only(
+    client: TestClient, db_session: Session, role: str
+) -> None:
     caller = _create_user(db_session, email=f"audit-caller2-{role}@example.com", role=role)
 
     response = client.get("/audit-log", headers=_headers(caller))
