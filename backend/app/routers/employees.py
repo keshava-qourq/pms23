@@ -6,6 +6,7 @@ import uuid
 from datetime import UTC, datetime
 
 from fastapi import APIRouter, Depends, HTTPException, Response, status
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from app import models
@@ -37,7 +38,11 @@ async def create_employee(
     db: Session = Depends(get_db),  # noqa: B008
     current_user: models.User = Depends(require_roles("hr_admin")),  # noqa: B008
 ) -> models.User:
-    existing = db.query(models.User).filter(models.User.email == payload.email).first()
+    existing = (
+        db.query(models.User)
+        .filter(func.lower(models.User.email) == payload.email.lower())
+        .first()
+    )
     if existing is not None:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT, detail="An employee with this email exists"
@@ -78,8 +83,12 @@ async def update_employee(
 ) -> models.User:
     employee = _get_employee_or_404(db, id)
 
-    if payload.email is not None and payload.email != employee.email:
-        existing = db.query(models.User).filter(models.User.email == payload.email).first()
+    if payload.email is not None and payload.email.lower() != employee.email.lower():
+        existing = (
+            db.query(models.User)
+            .filter(func.lower(models.User.email) == payload.email.lower())
+            .first()
+        )
         if existing is not None:
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT, detail="An employee with this email exists"
@@ -141,17 +150,14 @@ async def set_manager(
 
     previous_manager_id = employee.manager_id
     employee.manager_id = payload.manager_id
-    db.add(
-        models.AuditLog(
-            actor_id=current_user.id,
-            entity_type="reporting_line",
-            entity_id=employee.id,
-            action="manager_changed",
-            changes={
-                "previous_manager_id": str(previous_manager_id) if previous_manager_id else None,
-                "new_manager_id": str(payload.manager_id),
-            },
-        )
+    record_change(
+        db,
+        current_user,
+        "reporting_line",
+        employee.id,
+        "manager_changed",
+        before={"manager_id": str(previous_manager_id) if previous_manager_id else None},
+        after={"manager_id": str(payload.manager_id)},
     )
     db.commit()
     db.refresh(employee)
@@ -282,6 +288,7 @@ async def delete_personal_data(
 ) -> Response:
     employee = _get_employee_or_404(db, id)
     before = {"name": employee.name, "email": employee.email}
+    old_name, old_email = employee.name, employee.email
 
     employee.name = "Anonymised User"
     employee.email = f"anonymised-{employee.id}@deleted.invalid"
@@ -299,5 +306,74 @@ async def delete_personal_data(
         before=before,
         after=after,
     )
+
+    # The user row is now anonymised, but the real name/email were already
+    # baked as literal text into other tables (praise notifications, and
+    # earlier audit-log before/after snapshots of this same employee).
+    # Anonymising only the users row would leave the deleted PII readable
+    # there forever, defeating the point of this endpoint -- scrub both.
+    _scrub_praise_notifications(db, employee.id, old_name, employee.name)
+    _scrub_audit_history(db, employee.id, old_name, employee.name, old_email, employee.email)
+
     db.commit()
     return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+def _scrub_praise_notifications(
+    db: Session, employee_id: uuid.UUID, old_name: str, new_name: str
+) -> None:
+    """Notifications created by `send_praise` bake the sender's name as
+    literal text into the message (see routers/praise.py). Replace it so a
+    deleted sender's real name does not remain readable there."""
+    sent_praise_ids = [
+        row.id
+        for row in db.query(models.Praise.id).filter(models.Praise.sender_id == employee_id).all()
+    ]
+    if not sent_praise_ids:
+        return
+    notifications = db.query(models.Notification).filter(
+        models.Notification.type == "praise",
+        models.Notification.message.contains(old_name),
+    ).all()
+    for note in notifications:
+        note.message = note.message.replace(old_name, new_name)
+
+
+def _redact(value, old_name: str, new_name: str, old_email: str, new_email: str):
+    if isinstance(value, dict):
+        return {
+            k: _redact(v, old_name, new_name, old_email, new_email) for k, v in value.items()
+        }
+    if isinstance(value, list):
+        return [_redact(v, old_name, new_name, old_email, new_email) for v in value]
+    if value == old_name:
+        return new_name
+    if value == old_email:
+        return new_email
+    return value
+
+
+def _scrub_audit_history(
+    db: Session,
+    employee_id: uuid.UUID,
+    old_name: str,
+    new_name: str,
+    old_email: str,
+    new_email: str,
+) -> None:
+    """Earlier audit-log rows for this employee (created/updated/...) store
+    the original name/email forever in their before/after snapshot. Redact
+    those values in place so the 'deleted' PII does not remain readable in
+    the audit trail."""
+    rows = (
+        db.query(models.AuditLog)
+        .filter(
+            models.AuditLog.entity_type == "employee",
+            models.AuditLog.entity_id == employee_id,
+        )
+        .all()
+    )
+    for row in rows:
+        if not row.changes:
+            continue
+        row.changes = _redact(row.changes, old_name, new_name, old_email, new_email)

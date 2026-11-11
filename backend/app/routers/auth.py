@@ -8,6 +8,7 @@ import secrets
 from datetime import UTC, datetime, timedelta
 
 from fastapi import APIRouter, Depends, HTTPException, Response, status
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from app import models, settings
@@ -32,12 +33,8 @@ from app.security import (
 _RESET_TOKEN_TTL = timedelta(minutes=30)
 # Account-enumeration-safe: identical whether the email is known or not, and
 # never mentions "token" so the response body never hints at the mechanism.
-_GENERIC_RESET_RESPONSE = {
-    "detail": "If that email is registered, a reset link has been sent."
-}
-_INVALID_RESET_TOKEN_DETAIL = (
-    "This reset link is invalid or has expired. Please request a new one."
-)
+_GENERIC_RESET_RESPONSE = {"detail": "If that email is registered, a reset link has been sent."}
+_INVALID_RESET_TOKEN_DETAIL = "This reset link is invalid or has expired. Please request a new one."
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -59,7 +56,11 @@ _HOME_ROUTES = {
 
 @router.post("/login", response_model=LoginResponse)
 async def login(payload: LoginRequest, db: Session = Depends(get_db)) -> LoginResponse:  # noqa: B008
-    user = db.query(models.User).filter(models.User.email == payload.email).first()
+    user = (
+        db.query(models.User)
+        .filter(func.lower(models.User.email) == payload.email.lower())
+        .first()
+    )
     password_hash = user.password_hash if user is not None else _DUMMY_PASSWORD_HASH
     password_ok = verify_password(payload.password, password_hash)
 
@@ -86,9 +87,14 @@ async def logout(payload: dict = Depends(get_token_payload)) -> Response:  # noq
 
 @router.post("/password-reset/request", status_code=status.HTTP_202_ACCEPTED)
 async def request_password_reset(
-    payload: PasswordResetRequest, db: Session = Depends(get_db)  # noqa: B008
+    payload: PasswordResetRequest,
+    db: Session = Depends(get_db),  # noqa: B008
 ) -> dict:
-    user = db.query(models.User).filter(models.User.email == payload.email).first()
+    user = (
+        db.query(models.User)
+        .filter(func.lower(models.User.email) == payload.email.lower())
+        .first()
+    )
     if user is not None:
         plaintext_token = secrets.token_urlsafe(32)
         db.add(
@@ -106,23 +112,23 @@ async def request_password_reset(
 
 @router.post("/password-reset/confirm")
 async def confirm_password_reset(
-    payload: PasswordResetConfirmRequest, db: Session = Depends(get_db)  # noqa: B008
+    payload: PasswordResetConfirmRequest,
+    db: Session = Depends(get_db),  # noqa: B008
 ) -> dict:
     now = datetime.now(UTC)
+    # Bounded by the token TTL (NFR-009): only tokens that are still live --
+    # unused and unexpired -- are ever loaded, so the bcrypt-verify loop below
+    # stays bounded by the TTL window's request volume, never by how many
+    # reset tokens have accumulated in the table's history.
     candidates = (
         db.query(models.PasswordResetToken)
-        .filter(models.PasswordResetToken.used_at.is_(None))
+        .filter(
+            models.PasswordResetToken.used_at.is_(None),
+            models.PasswordResetToken.expires_at > now,
+        )
         .all()
     )
-    matched = next(
-        (t for t in candidates if verify_password(payload.token, t.token_hash)), None
-    )
-    if matched is not None:
-        expires_at = matched.expires_at
-        if expires_at.tzinfo is None:
-            expires_at = expires_at.replace(tzinfo=UTC)
-        if expires_at < now:
-            matched = None
+    matched = next((t for t in candidates if verify_password(payload.token, t.token_hash)), None)
 
     if matched is None:
         raise HTTPException(

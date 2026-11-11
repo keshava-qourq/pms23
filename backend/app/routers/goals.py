@@ -39,9 +39,7 @@ def _get_objective_or_404(db: Session, objective_id: uuid.UUID) -> models.Object
     return objective
 
 
-def _authorize_goal_access(
-    db: Session, current_user: models.User, goal: models.Goal
-) -> None:
+def _authorize_goal_access(db: Session, current_user: models.User, goal: models.Goal) -> None:
     """A caller may read or write a goal when they are HR admin, the goal's
     owner, or a manager somewhere above the owner in the reporting line.
     Executives are read-only elsewhere and never pass here (goal writes are
@@ -72,8 +70,7 @@ async def create_goal(
         if owner is None:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Owner not found")
         authorized = current_user.role == "hr_admin" or (
-            current_user.role == "manager"
-            and is_in_reporting_line(db, current_user.id, owner_id)
+            current_user.role == "manager" and is_in_reporting_line(db, current_user.id, owner_id)
         )
         if not authorized:
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden")
@@ -108,9 +105,7 @@ async def list_goals(
     query = db.query(models.Goal)
     if owner_ids is not None:
         query = query.filter(models.Goal.owner_id.in_(owner_ids))
-    return (
-        query.order_by(models.Goal.created_at.desc()).offset(offset).limit(limit).all()
-    )
+    return query.order_by(models.Goal.created_at.desc()).offset(offset).limit(limit).all()
 
 
 @router.put("/goals/{id}", response_model=GoalRead)
@@ -127,13 +122,13 @@ async def update_goal(
     if "parent_objective_id" in fields_set and payload.parent_objective_id is not None:
         _get_objective_or_404(db, payload.parent_objective_id)
 
-    if payload.title is not None:
+    if "title" in fields_set and payload.title is not None:
         goal.title = payload.title
-    if payload.description is not None:
+    if "description" in fields_set:
         goal.description = payload.description
-    if payload.target_metric is not None:
+    if "target_metric" in fields_set and payload.target_metric is not None:
         goal.target_metric = payload.target_metric
-    if payload.due_date is not None:
+    if "due_date" in fields_set and payload.due_date is not None:
         goal.due_date = payload.due_date
     if "parent_objective_id" in fields_set:
         goal.parent_objective_id = payload.parent_objective_id
@@ -152,6 +147,17 @@ async def update_goal_progress(
 ) -> models.Goal:
     goal = _get_goal_or_404(db, id)
     _authorize_goal_access(db, current_user, goal)
+
+    if payload.progress_percent is not None and goal.progress_type != "percent":
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="progress_percent only applies to percent-tracked goals",
+        )
+    if payload.status is not None and goal.progress_type != "status":
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="status only applies to status-tracked goals",
+        )
 
     if payload.progress_percent is not None:
         goal.progress_percent = payload.progress_percent

@@ -13,7 +13,7 @@ import uuid
 from datetime import date, datetime
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
 
 Role = Literal["employee", "manager", "hr_admin", "executive"]
 ProgressType = Literal["percent", "status"]
@@ -37,14 +37,14 @@ class StubResponse(BaseModel):
 
 
 class LoginRequest(BaseModel):
-    email: str
+    email: EmailStr
     password: str
 
 
 class LoginUser(BaseModel):
     id: uuid.UUID
     name: str
-    email: str
+    email: EmailStr
     role: Role
 
 
@@ -56,7 +56,7 @@ class LoginResponse(BaseModel):
 
 
 class PasswordResetRequest(BaseModel):
-    email: str
+    email: EmailStr
 
 
 class PasswordResetConfirmRequest(BaseModel):
@@ -82,14 +82,14 @@ class PasswordResetConfirmRequest(BaseModel):
 
 class EmployeeCreate(BaseModel):
     name: str
-    email: str
+    email: EmailStr
     role: Role
     manager_id: uuid.UUID | None = None
 
 
 class EmployeeUpdate(BaseModel):
     name: str | None = None
-    email: str | None = None
+    email: EmailStr | None = None
     role: Role | None = None
 
 
@@ -106,7 +106,7 @@ class EmployeeRead(BaseModel):
 
     id: uuid.UUID
     name: str
-    email: str
+    email: EmailStr
     role: Role
     manager_id: uuid.UUID | None = None
     is_active: bool
