@@ -8,6 +8,7 @@ import secrets
 from datetime import UTC, datetime, timedelta
 
 from fastapi import APIRouter, Depends, HTTPException, Response, status
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from app import models, settings
@@ -17,7 +18,6 @@ from app.schemas import (
     LoginRequest,
     LoginResponse,
     LoginUser,
-    PasswordResetAccepted,
     PasswordResetConfirmRequest,
     PasswordResetRequest,
 )
@@ -29,15 +29,14 @@ from app.security import (
     verify_password,
 )
 
-router = APIRouter(prefix="/auth", tags=["auth"])
+# AC-008/NFR-003: time-limited, single-use reset tokens.
+_RESET_TOKEN_TTL = timedelta(minutes=30)
+# Account-enumeration-safe: identical whether the email is known or not, and
+# never mentions "token" so the response body never hints at the mechanism.
+_GENERIC_RESET_RESPONSE = {"detail": "If that email is registered, a reset link has been sent."}
+_INVALID_RESET_TOKEN_DETAIL = "This reset link is invalid or has expired. Please request a new one."
 
-# NFR-003/AC-010: one generic message for an expired, already-used or unknown token --
-# never anything that would tell an attacker which of the three it was.
-_RESET_INVALID_MESSAGE = "This reset link is invalid or has expired. Please request a new one."
-# No account enumeration: this is returned whether or not the email is registered.
-_RESET_REQUEST_MESSAGE = (
-    "If an account with that email exists, a password reset link has been sent."
-)
+router = APIRouter(prefix="/auth", tags=["auth"])
 
 # NFR-002: one generic message, used whether the email is unknown, the password is
 # wrong, or the account is deactivated -- never anything that discloses which.
@@ -57,7 +56,11 @@ _HOME_ROUTES = {
 
 @router.post("/login", response_model=LoginResponse)
 async def login(payload: LoginRequest, db: Session = Depends(get_db)) -> LoginResponse:  # noqa: B008
-    user = db.query(models.User).filter(models.User.email == payload.email).first()
+    user = (
+        db.query(models.User)
+        .filter(func.lower(models.User.email) == payload.email.lower())
+        .first()
+    )
     password_hash = user.password_hash if user is not None else _DUMMY_PASSWORD_HASH
     password_ok = verify_password(payload.password, password_hash)
 
@@ -82,66 +85,63 @@ async def logout(payload: dict = Depends(get_token_payload)) -> Response:  # noq
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
-@router.post(
-    "/password-reset/request",
-    status_code=status.HTTP_202_ACCEPTED,
-    response_model=PasswordResetAccepted,
-)
+@router.post("/password-reset/request", status_code=status.HTTP_202_ACCEPTED)
 async def request_password_reset(
     payload: PasswordResetRequest,
     db: Session = Depends(get_db),  # noqa: B008
-) -> PasswordResetAccepted:
-    """AC-008: on a registered, active email, creates a PasswordResetToken
-    row holding only the token's hash and sends the plaintext token -- never
-    persisted or logged -- as a link via SendGrid. The response is the same
-    202 and body either way, so a caller cannot tell whether the email
-    exists."""
-    user = db.query(models.User).filter(models.User.email == payload.email).first()
-    if user is not None and user.is_active:
+) -> dict:
+    user = (
+        db.query(models.User)
+        .filter(func.lower(models.User.email) == payload.email.lower())
+        .first()
+    )
+    if user is not None:
         plaintext_token = secrets.token_urlsafe(32)
-        expires_at = datetime.now(UTC) + timedelta(
-            minutes=settings.PASSWORD_RESET_TOKEN_TTL_MINUTES
-        )
         db.add(
             models.PasswordResetToken(
                 user_id=user.id,
                 token_hash=hash_password(plaintext_token),
-                expires_at=expires_at,
+                expires_at=datetime.now(UTC) + _RESET_TOKEN_TTL,
             )
         )
         db.commit()
-        reset_link = f"{settings.FRONTEND_URL}/reset-password?token={plaintext_token}"
+        reset_link = f"{settings.PASSWORD_RESET_URL_BASE}?token={plaintext_token}"
         send_password_reset_email(user.email, reset_link)
-    return PasswordResetAccepted(detail=_RESET_REQUEST_MESSAGE)
+    return _GENERIC_RESET_RESPONSE
 
 
-@router.post("/password-reset/confirm", response_model=PasswordResetAccepted)
+@router.post("/password-reset/confirm")
 async def confirm_password_reset(
     payload: PasswordResetConfirmRequest,
     db: Session = Depends(get_db),  # noqa: B008
-) -> PasswordResetAccepted:
-    """AC-009/AC-010/NFR-003: only a token that is unused and unexpired can
-    match; an expired, already-used or unknown token all land on the same
-    generic rejection. The candidate's hash is verified with the same bcrypt
-    check used for passwords -- the plaintext token is never stored, so this
-    is the only way to find the matching row."""
+) -> dict:
     now = datetime.now(UTC)
+    # Bounded by the token TTL (NFR-009): only tokens that are still live --
+    # unused and unexpired -- are ever loaded, so the bcrypt-verify loop below
+    # stays bounded by the TTL window's request volume, never by how many
+    # reset tokens have accumulated in the table's history.
     candidates = (
         db.query(models.PasswordResetToken)
-        .filter(models.PasswordResetToken.used_at.is_(None))
-        .filter(models.PasswordResetToken.expires_at > now)
-        .order_by(models.PasswordResetToken.created_at.desc())
+        .filter(
+            models.PasswordResetToken.used_at.is_(None),
+            models.PasswordResetToken.expires_at > now,
+        )
         .all()
     )
-    matched = next((c for c in candidates if verify_password(payload.token, c.token_hash)), None)
+    matched = next((t for t in candidates if verify_password(payload.token, t.token_hash)), None)
+
     if matched is None:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=_RESET_INVALID_MESSAGE)
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail=_INVALID_RESET_TOKEN_DETAIL
+        )
 
     user = db.query(models.User).filter(models.User.id == matched.user_id).first()
     if user is None:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=_RESET_INVALID_MESSAGE)
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail=_INVALID_RESET_TOKEN_DETAIL
+        )
 
     user.password_hash = hash_password(payload.new_password)
     matched.used_at = now
     db.commit()
-    return PasswordResetAccepted(detail="Your password has been updated.")
+    return {"detail": "Your password has been updated."}

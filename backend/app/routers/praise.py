@@ -1,11 +1,15 @@
-"""Praise: peer recognition notes, with an in-app notification to the
-recipient (AC-040). Scoped to the caller: `GET /praise/received` only ever
-reads the authenticated caller's own praise (AC-004, AC-042, AC-043), and
-executives -- read-only everywhere else in this app (NFR-001) -- may not
-send praise either (AC-006).
+"""Praise: peer recognition notes (US-015).
+
+AC-040 POST /praise persists the note and creates an in-app notification for
+the recipient in the same transaction. AC-041 an empty recipient or empty
+(or blank) message is rejected with 422 and nothing is written -- schema
+validation handles both (an invalid/missing uuid and the blank-message
+validator in app.schemas). AC-042/AC-043 GET /praise/received returns only
+the caller's own received notes, newest first, and an empty list when they
+have none. NFR-001 one user cannot read another user's received praise.
 """
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from app import models
@@ -15,9 +19,6 @@ from app.security import get_current_user
 
 router = APIRouter(prefix="/praise", tags=["praise"])
 
-_LIMIT_QUERY = Query(default=50, ge=1, le=200)
-_OFFSET_QUERY = Query(default=0, ge=0)
-
 
 @router.post("", response_model=PraiseRead, status_code=status.HTTP_201_CREATED)
 async def send_praise(
@@ -25,28 +26,22 @@ async def send_praise(
     db: Session = Depends(get_db),  # noqa: B008
     current_user: models.User = Depends(get_current_user),  # noqa: B008
 ) -> models.Praise:
-    if current_user.role == "executive":
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden")
-
     recipient = db.query(models.User).filter(models.User.id == payload.recipient_id).first()
-    if recipient is None or not recipient.is_active:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Recipient must be an active employee",
-        )
+    if recipient is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Recipient not found")
 
     praise = models.Praise(
         sender_id=current_user.id,
-        recipient_id=recipient.id,
+        recipient_id=payload.recipient_id,
         message=payload.message,
     )
     db.add(praise)
     db.flush()
     db.add(
         models.Notification(
-            user_id=recipient.id,
+            user_id=payload.recipient_id,
             type="praise",
-            message=f"{current_user.name} sent you praise: {payload.message}",
+            message=f"{current_user.name} praised you: {payload.message}",
         )
     )
     db.commit()
@@ -56,8 +51,6 @@ async def send_praise(
 
 @router.get("/received", response_model=list[PraiseRead])
 async def received_praise(
-    limit: int = _LIMIT_QUERY,
-    offset: int = _OFFSET_QUERY,
     db: Session = Depends(get_db),  # noqa: B008
     current_user: models.User = Depends(get_current_user),  # noqa: B008
 ) -> list[models.Praise]:
@@ -65,7 +58,5 @@ async def received_praise(
         db.query(models.Praise)
         .filter(models.Praise.recipient_id == current_user.id)
         .order_by(models.Praise.created_at.desc())
-        .offset(offset)
-        .limit(limit)
         .all()
     )

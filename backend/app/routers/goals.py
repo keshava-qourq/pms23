@@ -1,11 +1,4 @@
-"""Goals, their progress and their check-ins.
-
-Every endpoint sits behind the shared RBAC dependency (app.security) and the
-reusable reporting-line scope (app.scoping.visible_owner_ids): employees see
-only their own goals, managers see their own and their reports' (direct and
-transitive), hr_admin and executive see every goal. Executives are
-read-only everywhere here -- every write raises 403 (NFR-001/AC-006).
-"""
+"""Goals, their progress and their check-ins."""
 
 import uuid
 from datetime import UTC, datetime
@@ -23,7 +16,7 @@ from app.schemas import (
     GoalRead,
     GoalUpdate,
 )
-from app.scoping import visible_owner_ids
+from app.scoping import is_in_reporting_line, visible_owner_ids
 from app.security import get_current_user
 
 router = APIRouter(tags=["goals"])
@@ -39,13 +32,27 @@ def _get_goal_or_404(db: Session, goal_id: uuid.UUID) -> models.Goal:
     return goal
 
 
-def _can_view_goal(db: Session, user: models.User, goal: models.Goal) -> bool:
-    ids = visible_owner_ids(db, user)
-    return ids is None or goal.owner_id in ids
+def _get_objective_or_404(db: Session, objective_id: uuid.UUID) -> models.Objective:
+    objective = db.query(models.Objective).filter(models.Objective.id == objective_id).first()
+    if objective is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Objective not found")
+    return objective
 
 
-def _can_write_goal(db: Session, user: models.User, goal: models.Goal) -> bool:
-    return user.role != "executive" and _can_view_goal(db, user, goal)
+def _authorize_goal_access(db: Session, current_user: models.User, goal: models.Goal) -> None:
+    """A caller may read or write a goal when they are HR admin, the goal's
+    owner, or a manager somewhere above the owner in the reporting line.
+    Executives are read-only elsewhere and never pass here (goal writes are
+    never theirs to make)."""
+    if current_user.role == "executive":
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden")
+    if current_user.role == "hr_admin":
+        return
+    if goal.owner_id == current_user.id:
+        return
+    if current_user.role == "manager" and is_in_reporting_line(db, current_user.id, goal.owner_id):
+        return
+    raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden")
 
 
 @router.post("/goals", response_model=GoalRead, status_code=status.HTTP_201_CREATED)
@@ -62,18 +69,14 @@ async def create_goal(
         owner = db.query(models.User).filter(models.User.id == owner_id).first()
         if owner is None:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Owner not found")
-        ids = visible_owner_ids(db, current_user)
-        if ids is not None and owner_id not in ids:
+        authorized = current_user.role == "hr_admin" or (
+            current_user.role == "manager" and is_in_reporting_line(db, current_user.id, owner_id)
+        )
+        if not authorized:
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden")
 
     if payload.parent_objective_id is not None:
-        objective = (
-            db.query(models.Objective)
-            .filter(models.Objective.id == payload.parent_objective_id)
-            .first()
-        )
-        if objective is None:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Objective not found")
+        _get_objective_or_404(db, payload.parent_objective_id)
 
     goal = models.Goal(
         owner_id=owner_id,
@@ -84,7 +87,6 @@ async def create_goal(
         target_metric=payload.target_metric,
         progress_type=payload.progress_type,
         due_date=payload.due_date,
-        status="Not started",
     )
     db.add(goal)
     db.commit()
@@ -99,10 +101,10 @@ async def list_goals(
     db: Session = Depends(get_db),  # noqa: B008
     current_user: models.User = Depends(get_current_user),  # noqa: B008
 ) -> list[models.Goal]:
-    ids = visible_owner_ids(db, current_user)
+    owner_ids = visible_owner_ids(db, current_user)
     query = db.query(models.Goal)
-    if ids is not None:
-        query = query.filter(models.Goal.owner_id.in_(ids))
+    if owner_ids is not None:
+        query = query.filter(models.Goal.owner_id.in_(owner_ids))
     return query.order_by(models.Goal.created_at.desc()).offset(offset).limit(limit).all()
 
 
@@ -114,26 +116,22 @@ async def update_goal(
     current_user: models.User = Depends(get_current_user),  # noqa: B008
 ) -> models.Goal:
     goal = _get_goal_or_404(db, id)
-    if not _can_write_goal(db, current_user, goal):
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden")
+    _authorize_goal_access(db, current_user, goal)
 
-    if payload.parent_objective_id is not None:
-        objective = (
-            db.query(models.Objective)
-            .filter(models.Objective.id == payload.parent_objective_id)
-            .first()
-        )
-        if objective is None:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Objective not found")
-        goal.parent_objective_id = payload.parent_objective_id
-    if payload.title is not None:
+    fields_set = payload.model_fields_set
+    if "parent_objective_id" in fields_set and payload.parent_objective_id is not None:
+        _get_objective_or_404(db, payload.parent_objective_id)
+
+    if "title" in fields_set and payload.title is not None:
         goal.title = payload.title
-    if payload.description is not None:
+    if "description" in fields_set:
         goal.description = payload.description
-    if payload.target_metric is not None:
+    if "target_metric" in fields_set and payload.target_metric is not None:
         goal.target_metric = payload.target_metric
-    if payload.due_date is not None:
+    if "due_date" in fields_set and payload.due_date is not None:
         goal.due_date = payload.due_date
+    if "parent_objective_id" in fields_set:
+        goal.parent_objective_id = payload.parent_objective_id
 
     db.commit()
     db.refresh(goal)
@@ -148,21 +146,24 @@ async def update_goal_progress(
     current_user: models.User = Depends(get_current_user),  # noqa: B008
 ) -> models.Goal:
     goal = _get_goal_or_404(db, id)
-    if not _can_write_goal(db, current_user, goal):
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden")
+    _authorize_goal_access(db, current_user, goal)
+
+    if payload.progress_percent is not None and goal.progress_type != "percent":
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="progress_percent only applies to percent-tracked goals",
+        )
+    if payload.status is not None and goal.progress_type != "status":
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="status only applies to status-tracked goals",
+        )
 
     if payload.progress_percent is not None:
         goal.progress_percent = payload.progress_percent
-        if payload.progress_percent >= 100:
-            goal.status = "Completed"
     if payload.status is not None:
         goal.status = payload.status
-
-    if goal.status == "Completed":
-        if goal.completed_at is None:
-            goal.completed_at = datetime.now(UTC)
-    else:
-        goal.completed_at = None
+        goal.completed_at = datetime.now(UTC) if payload.status == "Completed" else None
 
     db.commit()
     db.refresh(goal)
@@ -179,8 +180,7 @@ async def add_check_in(
     current_user: models.User = Depends(get_current_user),  # noqa: B008
 ) -> models.CheckIn:
     goal = _get_goal_or_404(db, id)
-    if not _can_write_goal(db, current_user, goal):
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden")
+    _authorize_goal_access(db, current_user, goal)
 
     check_in = models.CheckIn(goal_id=goal.id, author_id=current_user.id, note=payload.note)
     db.add(check_in)
@@ -196,12 +196,11 @@ async def list_check_ins(
     current_user: models.User = Depends(get_current_user),  # noqa: B008
 ) -> list[models.CheckIn]:
     goal = _get_goal_or_404(db, id)
-    if not _can_view_goal(db, current_user, goal):
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden")
+    _authorize_goal_access(db, current_user, goal)
 
     return (
         db.query(models.CheckIn)
         .filter(models.CheckIn.goal_id == goal.id)
-        .order_by(models.CheckIn.created_at)
+        .order_by(models.CheckIn.created_at.desc())
         .all()
     )

@@ -7,43 +7,13 @@
 // calling it from more than one spec file is safe.
 import { execFileSync } from "node:child_process";
 import path from "node:path";
-import { fileURLToPath } from "node:url";
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const BACKEND_DIR = path.resolve(__dirname, "..", "..", "backend");
 const PYTHON = path.join(BACKEND_DIR, ".venv", "bin", "python");
 const SEED_SCRIPT = path.join(BACKEND_DIR, "tests", "e2e_seed.py");
-const RESET_HELPER_SCRIPT = path.join(BACKEND_DIR, "tests", "e2e_reset_helper.py");
 
 export function seedE2EUsers(): void {
   execFileSync(PYTHON, [SEED_SCRIPT], { cwd: BACKEND_DIR, stdio: "inherit" });
-}
-
-// Drives the real POST /auth/password-reset/request (see
-// backend/tests/e2e_reset_helper.py) and returns the plaintext token the
-// response itself never discloses -- there is no other way for the e2e
-// suite to get one.
-export function requestResetToken(email: string): string {
-  const output = execFileSync(PYTHON, [RESET_HELPER_SCRIPT, "request", email], {
-    cwd: BACKEND_DIR,
-  });
-  return output.toString().trim();
-}
-
-// Back-dates the given user's most recent reset token past its TTL.
-export function expireLatestResetToken(email: string): void {
-  execFileSync(PYTHON, [RESET_HELPER_SCRIPT, "expire", email], {
-    cwd: BACKEND_DIR,
-    stdio: "inherit",
-  });
-}
-
-// Marks the given user's most recent reset token already spent.
-export function markLatestResetTokenUsed(email: string): void {
-  execFileSync(PYTHON, [RESET_HELPER_SCRIPT, "use", email], {
-    cwd: BACKEND_DIR,
-    stdio: "inherit",
-  });
 }
 
 // Kept in sync by hand with backend/tests/e2e_seed.py -- both files exist only

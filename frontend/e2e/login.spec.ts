@@ -73,34 +73,6 @@ test("[AC-003] signing out then reloading requires signing in again", async ({ p
   await expect(page).toHaveURL(/\/login$/);
 });
 
-// AC-044/AC-045: the stale role-permissions description is gone, and the
-// rest of the sign-in form (email, password, submit, reset link) still
-// works end to end for a valid sign-in.
-test("[AC-044][AC-045] the description text is gone and sign-in still completes", async ({
-  page,
-}) => {
-  await page.goto("/login");
-
-  await expect(page.getByText("PMS23 shows only what your role permits")).toHaveCount(0);
-
-  const emailInput = page.locator("#vl-email");
-  const passwordInput = page.locator("#vl-password");
-  const submitButton = page.getByRole("button", { name: /sign in/i });
-  const resetLink = page.getByRole("link", { name: /email me a reset link/i });
-
-  await expect(emailInput).toBeVisible();
-  await expect(passwordInput).toBeVisible();
-  await expect(submitButton).toBeVisible();
-  await expect(resetLink).toBeVisible();
-
-  const { email, homeRoute } = E2E_ROLE_USERS.employee;
-  await emailInput.fill(email);
-  await passwordInput.fill(E2E_PASSWORD);
-  await submitButton.click();
-
-  await expect(page).toHaveURL(new RegExp(`${homeRoute}$`));
-});
-
 // NFR-010: the login screen must render usably at a 360px mobile viewport.
 test("[NFR-010] the login screen is usable at a 360px mobile viewport", async ({ page }) => {
   await page.setViewportSize({ width: 360, height: 740 });

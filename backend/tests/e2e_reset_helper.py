@@ -34,6 +34,7 @@ from sqlalchemy.orm import sessionmaker  # noqa: E402
 from app import models  # noqa: E402, F401 -- registers tables
 from app.database import get_db  # noqa: E402
 from app.main import app  # noqa: E402
+from tests.e2e_migrate import ensure_schema  # noqa: E402
 
 
 def _engine_and_factory():
@@ -118,6 +119,7 @@ def use_latest_token(email: str) -> None:
 
 
 def main() -> None:
+    ensure_schema()
     action, email = sys.argv[1], sys.argv[2]
     if action == "request":
         print(request_token(email))

@@ -13,12 +13,13 @@ import os
 
 MEDIA_ROOT = os.getenv("MEDIA_ROOT", "./media")
 
-# Password reset (US-003): SendGrid delivery and the reset link's lifetime.
-# SENDGRID_API_KEY is optional in environments (like this sandbox) that have
-# no SendGrid account configured -- sending is then a no-op and the request
-# still answers its generic 202, since the response must never reveal
-# whether the email was actually dispatched.
-SENDGRID_API_KEY = os.getenv("SENDGRID_API_KEY", "")
+# Password reset (AC-008): SendGrid API key, the sender address to use, and
+# the frontend page that performs the confirm step. All optional for a local
+# run -- when SENDGRID_API_KEY is unset, app.email.send_password_reset_email
+# is a no-op, matching the account-enumeration-safe behaviour the endpoint
+# needs regardless of whether email delivery is configured.
+SENDGRID_API_KEY = os.getenv("SENDGRID_API_KEY")
 PASSWORD_RESET_FROM_EMAIL = os.getenv("PASSWORD_RESET_FROM_EMAIL", "no-reply@example.com")
-FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:5173")
-PASSWORD_RESET_TOKEN_TTL_MINUTES = int(os.getenv("PASSWORD_RESET_TOKEN_TTL_MINUTES", "30"))
+PASSWORD_RESET_URL_BASE = os.getenv(
+    "PASSWORD_RESET_URL_BASE", "http://localhost:5173/reset-password"
+)

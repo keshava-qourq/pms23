@@ -144,7 +144,7 @@ class Praise(Base):
 
     id = _uuid_pk()
     sender_id = Column(GUID(), ForeignKey("users.id"), nullable=False)
-    recipient_id = Column(GUID(), ForeignKey("users.id"), nullable=False, index=True)
+    recipient_id = Column(GUID(), ForeignKey("users.id"), nullable=False)
     message = Column(Text, nullable=False)
     created_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now())
 
@@ -153,7 +153,7 @@ class Notification(Base):
     __tablename__ = "notifications"
 
     id = _uuid_pk()
-    user_id = Column(GUID(), ForeignKey("users.id"), nullable=False, index=True)
+    user_id = Column(GUID(), ForeignKey("users.id"), nullable=False)
     type = Column(String(32), nullable=False)
     message = Column(Text, nullable=False)
     is_read = Column(Boolean, nullable=False, default=False)

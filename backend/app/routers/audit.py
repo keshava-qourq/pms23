@@ -28,8 +28,10 @@ async def list_audit_log(
     offset: int = _OFFSET_QUERY,
     db: Session = Depends(get_db),  # noqa: B008
     _current_user: models.User = Depends(require_roles("hr_admin")),  # noqa: B008
-) -> list[models.AuditLog]:
-    query = db.query(models.AuditLog)
+) -> list[AuditLogEntry]:
+    query = db.query(models.AuditLog, models.User.name).outerjoin(
+        models.User, models.AuditLog.actor_id == models.User.id
+    )
     if entity:
         query = query.filter(models.AuditLog.entity_type == entity)
     if from_date:
@@ -40,4 +42,17 @@ async def list_audit_log(
         query = query.filter(
             models.AuditLog.created_at <= datetime.combine(to_date, time.max, tzinfo=UTC)
         )
-    return query.order_by(models.AuditLog.created_at.desc()).offset(offset).limit(limit).all()
+    rows = query.order_by(models.AuditLog.created_at.desc()).offset(offset).limit(limit).all()
+    return [
+        AuditLogEntry(
+            id=log.id,
+            actor_id=log.actor_id,
+            actor_name=actor_name,
+            entity_type=log.entity_type,
+            entity_id=log.entity_id,
+            action=log.action,
+            changes=log.changes,
+            created_at=log.created_at,
+        )
+        for log, actor_name in rows
+    ]
