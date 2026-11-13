@@ -21,11 +21,11 @@ const EXPIRED_EMAIL = "e2e.resetflow.expired@example.com";
 const USED_EMAIL = "e2e.resetflow.used@example.com";
 const NEW_PASSWORD = "NewStr0ngPass!1";
 
-test.beforeAll(() => {
+test.beforeAll(async () => {
   // Re-seeds every e2e user, including these three, with a known password --
   // undoing any password this suite's own "valid link" test changed on a
   // previous run, so the suite is safe to run more than once.
-  seedE2EUsers();
+  await seedE2EUsers();
 });
 
 // AC-008: a reset request starts from the login page.
@@ -53,7 +53,7 @@ test("[AC-008] an unregistered email shows the identical confirmation", async ({
 // AC-009: a valid, unexpired link sets a new password and that password
 // signs in immediately afterwards.
 test("[AC-009] sets a new password from a valid link and signs in with it", async ({ page }) => {
-  const token = requestResetToken(RESET_EMAIL);
+  const token = await requestResetToken(RESET_EMAIL);
 
   await page.goto(`/reset-password?token=${token}`);
   await page.locator("#rp-password").fill(NEW_PASSWORD);
@@ -71,8 +71,8 @@ test("[AC-009] sets a new password from a valid link and signs in with it", asyn
 
 // AC-010/NFR-003: an expired link is rejected and prompts for a new one.
 test("[AC-010] an expired link is rejected and prompts to request a new link", async ({ page }) => {
-  const token = requestResetToken(EXPIRED_EMAIL);
-  expireLatestResetToken(EXPIRED_EMAIL);
+  const token = await requestResetToken(EXPIRED_EMAIL);
+  await expireLatestResetToken(EXPIRED_EMAIL);
 
   await page.goto(`/reset-password?token=${token}`);
   await page.locator("#rp-password").fill(NEW_PASSWORD);
@@ -91,8 +91,8 @@ test("[AC-010] an expired link is rejected and prompts to request a new link", a
 test("[AC-010] an already-used link is rejected and prompts to request a new link", async ({
   page,
 }) => {
-  const token = requestResetToken(USED_EMAIL);
-  markLatestResetTokenUsed(USED_EMAIL);
+  const token = await requestResetToken(USED_EMAIL);
+  await markLatestResetTokenUsed(USED_EMAIL);
 
   await page.goto(`/reset-password?token=${token}`);
   await page.locator("#rp-password").fill(NEW_PASSWORD);

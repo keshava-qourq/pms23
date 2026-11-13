@@ -21,8 +21,8 @@ import { expect, test } from "@playwright/test";
 
 import { E2E_PASSWORD, E2E_ROLE_USERS, seedE2EUsers } from "./fixtures";
 
-test.beforeAll(() => {
-  seedE2EUsers();
+test.beforeAll(async () => {
+  await seedE2EUsers();
 });
 
 async function signInAsEmployee(page: import("@playwright/test").Page) {
@@ -41,7 +41,9 @@ test.beforeEach(async ({ page }) => {
 
 // AC-040: sending a praise note shows a confirmation naming the recipient.
 test("[AC-040] sends a praise note and sees the confirmation", async ({ page }) => {
-  await page.locator("#praise-recipient").selectOption({ label: "Hannah Lindqvist — Staff Engineer" });
+  await page
+    .locator("#praise-recipient")
+    .selectOption({ label: "Hannah Lindqvist — Staff Engineer" });
   await page.locator("#praise-message").fill("Thanks for the thorough review this sprint.");
   await page.getByRole("button", { name: /send praise/i }).click();
 
@@ -60,7 +62,9 @@ test("[AC-041] submitting with no recipient chosen shows the prompt", async ({ p
 
 // AC-041: submitting with no message shows the prompt.
 test("[AC-041] submitting with an empty message shows the prompt", async ({ page }) => {
-  await page.locator("#praise-recipient").selectOption({ label: "Hannah Lindqvist — Staff Engineer" });
+  await page
+    .locator("#praise-recipient")
+    .selectOption({ label: "Hannah Lindqvist — Staff Engineer" });
   await page.getByRole("button", { name: /send praise/i }).click();
 
   await expect(page.getByRole("alert")).toContainText(/write a line or two/i);

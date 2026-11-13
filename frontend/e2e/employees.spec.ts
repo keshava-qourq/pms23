@@ -8,8 +8,8 @@ import { expect, test } from "@playwright/test";
 
 import { E2E_PASSWORD, E2E_ROLE_USERS, seedE2EUsers } from "./fixtures";
 
-test.beforeAll(() => {
-  seedE2EUsers();
+test.beforeAll(async () => {
+  await seedE2EUsers();
 });
 
 async function signInAsHrAdmin(page: import("@playwright/test").Page) {
