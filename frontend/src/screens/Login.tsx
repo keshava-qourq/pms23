@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom";
 
 import { brand } from "@/lib/brand";
 import { apiFetch, setSessionToken } from "@/lib/api";
-import { setSessionUser } from "./session";
 
 const PRODUCT = "PMS23";
 const HAIRLINE = "1px solid rgba(255,255,255,0.10)";
@@ -120,7 +119,6 @@ export default function Screen() {
         body: JSON.stringify({ email: email.trim(), password }),
       });
       setSessionToken(result.access_token);
-      setSessionUser(result.user);
       const destination = ROLE_HOME[result.user.role] ?? result.home_route ?? "/dashboard";
       navigate(destination, { replace: true });
     } catch {

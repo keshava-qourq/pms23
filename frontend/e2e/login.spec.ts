@@ -2,8 +2,8 @@ import { expect, test } from "@playwright/test";
 
 import { E2E_DEACTIVATED_EMAIL, E2E_PASSWORD, E2E_ROLE_USERS, seedE2EUsers } from "./fixtures";
 
-test.beforeAll(async () => {
-  await seedE2EUsers();
+test.beforeAll(() => {
+  seedE2EUsers();
 });
 
 async function signIn(page: import("@playwright/test").Page, email: string, password: string) {

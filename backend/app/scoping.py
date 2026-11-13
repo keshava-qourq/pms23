@@ -9,17 +9,10 @@ unbounded Python loop over every employee.
 
 import uuid
 
-from sqlalchemy import literal, select
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app import models
-
-# Defence in depth, independent of `would_create_cycle`: no plausible
-# reporting line is ever this deep, so a depth cap this high only ever
-# bites if a cycle has somehow been introduced into `users.manager_id` by
-# some other path (manual DB edit, a bad migration, future code) -- it
-# turns an infinite recursive query against Postgres into a bounded one.
-_MAX_CHAIN_DEPTH = 10_000
 
 
 def _ancestor_chain_ids(db: Session, start_id: uuid.UUID) -> set[uuid.UUID]:
@@ -28,16 +21,12 @@ def _ancestor_chain_ids(db: Session, start_id: uuid.UUID) -> set[uuid.UUID]:
     of the table -- stays cheap at 1,000 employees."""
     user = models.User
     base = (
-        select(user.id, user.manager_id, literal(0).label("depth"))
+        select(user.id, user.manager_id)
         .where(user.id == start_id)
         .cte("ancestor_chain", recursive=True)
     )
     walked = base.alias()
-    recursive = (
-        select(user.id, user.manager_id, (walked.c.depth + 1).label("depth"))
-        .join(walked, user.id == walked.c.manager_id)
-        .where(walked.c.depth < _MAX_CHAIN_DEPTH)
-    )
+    recursive = select(user.id, user.manager_id).join(walked, user.id == walked.c.manager_id)
     cte = base.union_all(recursive)
     rows = db.execute(select(cte.c.id)).all()
     return {row.id for row in rows}
@@ -61,35 +50,3 @@ def is_in_reporting_line(db: Session, manager_id: uuid.UUID, employee_id: uuid.U
     directly or transitively, in the reporting line."""
     chain = _ancestor_chain_ids(db, employee_id)
     return manager_id in chain
-
-
-def _descendant_chain_ids(db: Session, start_id: uuid.UUID) -> set[uuid.UUID]:
-    """Everyone below `start_id` in the reporting line -- direct and
-    skip-level reports -- found by walking `manager_id` downward. Mirrors
-    `_ancestor_chain_ids` but in the other direction."""
-    user = models.User
-    base = (
-        select(user.id, user.manager_id, literal(0).label("depth"))
-        .where(user.manager_id == start_id)
-        .cte("descendant_chain", recursive=True)
-    )
-    walked = base.alias()
-    recursive = (
-        select(user.id, user.manager_id, (walked.c.depth + 1).label("depth"))
-        .join(walked, user.manager_id == walked.c.id)
-        .where(walked.c.depth < _MAX_CHAIN_DEPTH)
-    )
-    cte = base.union_all(recursive)
-    rows = db.execute(select(cte.c.id)).all()
-    return {row.id for row in rows}
-
-
-def visible_owner_ids(db: Session, user: models.User) -> set[uuid.UUID] | None:
-    """The set of owner ids `user` may see goals for, or None meaning "every
-    owner" (hr_admin). A manager sees themselves and every direct and
-    skip-level report; an employee or executive sees only themselves."""
-    if user.role == "hr_admin":
-        return None
-    if user.role == "manager":
-        return {user.id} | _descendant_chain_ids(db, user.id)
-    return {user.id}
