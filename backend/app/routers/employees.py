@@ -39,9 +39,7 @@ async def create_employee(
     current_user: models.User = Depends(require_roles("hr_admin")),  # noqa: B008
 ) -> models.User:
     existing = (
-        db.query(models.User)
-        .filter(func.lower(models.User.email) == payload.email.lower())
-        .first()
+        db.query(models.User).filter(func.lower(models.User.email) == payload.email.lower()).first()
     )
     if existing is not None:
         raise HTTPException(
@@ -150,7 +148,7 @@ async def set_manager(
 
     previous_manager_id = employee.manager_id
     employee.manager_id = payload.manager_id
-    record_change(
+    entry = record_change(
         db,
         current_user,
         "reporting_line",
@@ -159,6 +157,10 @@ async def set_manager(
         before={"manager_id": str(previous_manager_id) if previous_manager_id else None},
         after={"manager_id": str(payload.manager_id)},
     )
+    entry.changes = {
+        "previous_manager_id": str(previous_manager_id) if previous_manager_id else None,
+        "new_manager_id": str(payload.manager_id),
+    }
     db.commit()
     db.refresh(employee)
     return employee
@@ -331,19 +333,21 @@ def _scrub_praise_notifications(
     ]
     if not sent_praise_ids:
         return
-    notifications = db.query(models.Notification).filter(
-        models.Notification.type == "praise",
-        models.Notification.message.contains(old_name),
-    ).all()
+    notifications = (
+        db.query(models.Notification)
+        .filter(
+            models.Notification.type == "praise",
+            models.Notification.message.contains(old_name),
+        )
+        .all()
+    )
     for note in notifications:
         note.message = note.message.replace(old_name, new_name)
 
 
 def _redact(value, old_name: str, new_name: str, old_email: str, new_email: str):
     if isinstance(value, dict):
-        return {
-            k: _redact(v, old_name, new_name, old_email, new_email) for k, v in value.items()
-        }
+        return {k: _redact(v, old_name, new_name, old_email, new_email) for k, v in value.items()}
     if isinstance(value, list):
         return [_redact(v, old_name, new_name, old_email, new_email) for v in value]
     if value == old_name:
