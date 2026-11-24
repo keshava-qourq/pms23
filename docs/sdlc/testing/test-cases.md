@@ -3,7 +3,7 @@
 > Maintained by QuorQ AI SDLC. Text between `sdlc:auto` markers is regenerated; anything outside them is yours and is kept.
 
 <!-- sdlc:auto:start summary -->
-171 tests · Passed 136 · Failed 0 · Skipped 0 · Not run 35
+171 tests · Passed 135 · Failed 1 · Skipped 0 · Not run 35
 
 Acceptance criteria covered: 30/45 · passing: 8/45
 <!-- sdlc:auto:end summary -->
@@ -58,7 +58,7 @@ Acceptance criteria covered: 30/45 · passing: 8/45
 | — | test_nfr004_audit_log_is_hr_admin_only[employee] | Integration | Passed | `backend/tests/test_employees.py` |
 | — | test_nfr004_audit_log_is_hr_admin_only[executive] | Integration | Passed | `backend/tests/test_employees.py` |
 | — | test_nfr004_audit_log_is_hr_admin_only[manager] | Integration | Passed | `backend/tests/test_employees.py` |
-| — | test_nfr004_manager_change_produces_audit_row | Integration | Passed | `backend/tests/test_employees.py` |
+| — | test_nfr004_manager_change_produces_audit_row | Integration | Failed | `backend/tests/test_employees.py` |
 | AC-011 | [AC-011] creates an employee record | E2E | Not run yet | `frontend/e2e/employees.spec.ts` |
 | AC-011 | [AC-011] duplicate email is rejected with an inline error | E2E | Not run yet | `frontend/e2e/employees.spec.ts` |
 | AC-012 | [AC-012] editing a record reflects the change | E2E | Not run yet | `frontend/e2e/employees.spec.ts` |
@@ -87,15 +87,15 @@ Acceptance criteria covered: 30/45 · passing: 8/45
 | — | test_ac_every_protected_endpoint_requires_a_bearer_token[get-/analytics-None] | Integration | Passed | `backend/tests/test_rbac.py` |
 | — | test_ac_every_protected_endpoint_requires_a_bearer_token[get-/dashboard/me-None] | Integration | Passed | `backend/tests/test_rbac.py` |
 | — | test_ac_every_protected_endpoint_requires_a_bearer_token[get-/dashboard/team-None] | Integration | Passed | `backend/tests/test_rbac.py` |
-| — | test_ac_every_protected_endpoint_requires_a_bearer_token[get-/employees/632571e0-c40a-4a50-b4ff-34e7a12adee3/reports-None] | Integration | Passed | `backend/tests/test_rbac.py` |
+| — | test_ac_every_protected_endpoint_requires_a_bearer_token[get-/employees/06270bbb-b972-41f7-a932-a11f9aa348f0/reports-None] | Integration | Passed | `backend/tests/test_rbac.py` |
 | — | test_ac_every_protected_endpoint_requires_a_bearer_token[get-/goals-None] | Integration | Passed | `backend/tests/test_rbac.py` |
-| — | test_ac_every_protected_endpoint_requires_a_bearer_token[get-/goals/3f5e4c08-429f-472b-aaa5-b0b9833303f8/check-ins-None] | Integration | Passed | `backend/tests/test_rbac.py` |
+| — | test_ac_every_protected_endpoint_requires_a_bearer_token[get-/goals/fd183341-4197-4b20-8d8c-b2554f7e1fb1/check-ins-None] | Integration | Passed | `backend/tests/test_rbac.py` |
 | — | test_ac_every_protected_endpoint_requires_a_bearer_token[get-/praise/received-None] | Integration | Passed | `backend/tests/test_rbac.py` |
-| — | test_ac_every_protected_endpoint_requires_a_bearer_token[patch-/goals/4160ff05-7480-4d47-82fe-a0ac0cac9035/progress-json_body3] | Integration | Passed | `backend/tests/test_rbac.py` |
+| — | test_ac_every_protected_endpoint_requires_a_bearer_token[patch-/goals/61756ca3-661e-4799-9f4d-91685a495277/progress-json_body3] | Integration | Passed | `backend/tests/test_rbac.py` |
 | — | test_ac_every_protected_endpoint_requires_a_bearer_token[post-/goals-json_body1] | Integration | Passed | `backend/tests/test_rbac.py` |
-| — | test_ac_every_protected_endpoint_requires_a_bearer_token[post-/goals/a015c8b8-e1b2-470c-b609-20f768be2cdc/check-ins-json_body4] | Integration | Passed | `backend/tests/test_rbac.py` |
+| — | test_ac_every_protected_endpoint_requires_a_bearer_token[post-/goals/804cb62e-e9bd-4024-92bc-3f48d1fdb348/check-ins-json_body4] | Integration | Passed | `backend/tests/test_rbac.py` |
 | — | test_ac_every_protected_endpoint_requires_a_bearer_token[post-/praise-json_body11] | Integration | Passed | `backend/tests/test_rbac.py` |
-| — | test_ac_every_protected_endpoint_requires_a_bearer_token[put-/goals/8d8bfc07-0004-478c-a4eb-3d2f27dea98b-json_body2] | Integration | Passed | `backend/tests/test_rbac.py` |
+| — | test_ac_every_protected_endpoint_requires_a_bearer_token[put-/goals/bf72cf09-b513-43e2-924e-29bea874686b-json_body2] | Integration | Passed | `backend/tests/test_rbac.py` |
 
 ### US-003: Password reset
 

@@ -4,8 +4,8 @@
 
 <!-- sdlc:auto:start e2e -->
 **Status:** no_tests
-**Target:** sandbox
-**Date:** 2026-11-06
+**Target:** the app booted from the repository in the sandbox
+**Date:** 2026-11-13
 
 Passed: 0 · Failed: 0 · Skipped: 0 · Flaky: 0 · Total: 0
 <!-- sdlc:auto:end e2e -->
@@ -21,6 +21,12 @@ Passed: 0 · Failed: 0 · Skipped: 0 · Flaky: 0 · Total: 0
 <!-- sdlc:auto:end unit -->
 
 <!-- sdlc:auto:start dev-checks -->
+### Sprint 4
+
+| Step | Status | Ticket | Finished |
+|---|---|---|---|
+| run_checks | failed | — | 2026-11-13 |
+
 ### Sprint 3
 
 | Step | Status | Ticket | Finished |
