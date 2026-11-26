@@ -49,6 +49,19 @@ export function clearSessionToken(): void {
   }
 }
 
+// US-012.3: the goal owner's in-app reminders (AC-032/AC-034). `email_status`
+// mirrors AC-033 — "failed" means the reminder still exists even though the
+// email leg of it could not be sent (the email credential was not configured).
+export interface AppNotification {
+  id: string;
+  user_id: string;
+  type: string;
+  message: string;
+  is_read: boolean;
+  email_status: string | null;
+  created_at: string;
+}
+
 export async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
   const bearer = getSessionToken() ?? API_SECRET_KEY;
   // Join with exactly one slash: API_BASE_URL is baked with a trailing slash (the API
@@ -66,4 +79,15 @@ export async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> 
     throw new Error(`${init?.method ?? "GET"} ${path} failed: ${response.status}`);
   }
   return response.status === 204 ? (undefined as T) : ((await response.json()) as T);
+}
+
+// GET /notifications — the caller's in-app notifications, newest handled by
+// the server; the dashboard renders them as it receives them.
+export function listNotifications(): Promise<AppNotification[]> {
+  return apiFetch<AppNotification[]>("/notifications");
+}
+
+// PATCH /notifications/{id}/read — marks/dismisses one in-app notification as read.
+export function markNotificationRead(id: string): Promise<AppNotification> {
+  return apiFetch<AppNotification>(`/notifications/${id}/read`, { method: "PATCH" });
 }
