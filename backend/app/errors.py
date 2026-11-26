@@ -19,3 +19,15 @@ NOTIFICATION_FORBIDDEN = HTTPException(
     status_code=status.HTTP_403_FORBIDDEN,
     detail="You cannot access another user's notification",
 )
+
+# ---- dashboard ------------------------------------------------------------
+
+TEAM_DASHBOARD_EMPLOYEE_NOT_FOUND = HTTPException(
+    status_code=status.HTTP_404_NOT_FOUND,
+    detail="Employee not found",
+)
+
+TEAM_DASHBOARD_FORBIDDEN = HTTPException(
+    status_code=status.HTTP_403_FORBIDDEN,
+    detail="You cannot view the goals of an employee outside your reporting line",
+)
