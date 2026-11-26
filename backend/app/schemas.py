@@ -13,7 +13,7 @@ import uuid
 from datetime import date, datetime
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field
 
 Role = Literal["employee", "manager", "hr_admin", "executive"]
 ProgressType = Literal["percent", "status"]
@@ -37,14 +37,14 @@ class StubResponse(BaseModel):
 
 
 class LoginRequest(BaseModel):
-    email: EmailStr
+    email: str
     password: str
 
 
 class LoginUser(BaseModel):
     id: uuid.UUID
     name: str
-    email: EmailStr
+    email: str
     role: Role
 
 
@@ -56,25 +56,12 @@ class LoginResponse(BaseModel):
 
 
 class PasswordResetRequest(BaseModel):
-    email: EmailStr
+    email: str
 
 
 class PasswordResetConfirmRequest(BaseModel):
     token: str
     new_password: str
-
-    @field_validator("new_password")
-    @classmethod
-    def _password_rules(cls, value: str) -> str:
-        if len(value) < 8:
-            raise ValueError("Password must be at least 8 characters long")
-        if not any(c.isupper() for c in value):
-            raise ValueError("Password must contain an uppercase letter")
-        if not any(c.islower() for c in value):
-            raise ValueError("Password must contain a lowercase letter")
-        if not any(c.isdigit() for c in value):
-            raise ValueError("Password must contain a digit")
-        return value
 
 
 # ---- employees (users) --------------------------------------------------------
@@ -82,14 +69,14 @@ class PasswordResetConfirmRequest(BaseModel):
 
 class EmployeeCreate(BaseModel):
     name: str
-    email: EmailStr
+    email: str
     role: Role
     manager_id: uuid.UUID | None = None
 
 
 class EmployeeUpdate(BaseModel):
     name: str | None = None
-    email: EmailStr | None = None
+    email: str | None = None
     role: Role | None = None
 
 
@@ -106,13 +93,20 @@ class EmployeeRead(BaseModel):
 
     id: uuid.UUID
     name: str
-    email: EmailStr
+    email: str
     role: Role
     manager_id: uuid.UUID | None = None
     is_active: bool
     anonymised_at: datetime | None = None
     created_at: datetime
     updated_at: datetime
+
+
+class EmployeeList(BaseModel):
+    items: list[EmployeeRead]
+    total: int
+    skip: int
+    limit: int
 
 
 # ---- objectives ---------------------------------------------------------------
@@ -199,13 +193,6 @@ class PraiseCreate(BaseModel):
     recipient_id: uuid.UUID
     message: str
 
-    @field_validator("message")
-    @classmethod
-    def _message_not_blank(cls, value: str) -> str:
-        if not value.strip():
-            raise ValueError("Message must not be empty")
-        return value
-
 
 class PraiseRead(BaseModel):
     model_config = ConfigDict(from_attributes=True)
@@ -240,7 +227,6 @@ class AuditLogEntry(BaseModel):
 
     id: uuid.UUID
     actor_id: uuid.UUID | None = None
-    actor_name: str | None = None
     entity_type: str
     entity_id: uuid.UUID
     action: str

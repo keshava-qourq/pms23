@@ -1,8 +1,13 @@
-import * as React from "react";
+// @ts-nocheck -- generated from the approved design under its JS runtime contract; not hand-written TypeScript.
+/* eslint-disable @typescript-eslint/no-unused-vars */
+import React from "react";
 
+import * as UI from "@/lib/ui";
+import { Icons } from "@/lib/icons";
 import { brand } from "@/lib/brand";
-import { apiFetch } from "@/lib/api";
-import {
+import { useNavigate } from "@/lib/navigate";
+
+const {
   Button,
   Card,
   CardHeader,
@@ -19,554 +24,1390 @@ import {
   TR,
   TH,
   TD,
+  Avatar,
+  Tabs,
+  Stat,
   Empty,
-} from "@/lib/ui";
-import { getSessionUser } from "./session";
+} = UI;
 
-const HAIRLINE = "1px solid rgba(255,255,255,0.10)";
+const { Check, Filter } = Icons;
 
-type ProgressType = "percent" | "status";
+const SURFACE = "#1b2722";
+const SURFACE_2 = "#213029";
+const LINE = "rgba(233,237,233,0.11)";
+const LINE_STRONG = "rgba(233,237,233,0.22)";
 
-interface GoalRead {
-  id: string;
-  owner_id: string;
-  created_by: string;
-  parent_objective_id: string | null;
-  title: string;
-  description: string | null;
-  target_metric: string;
-  progress_type: ProgressType;
-  progress_percent: number | null;
-  status: string;
-  check_in_interval_days: number | null;
-  due_date: string;
-  completed_at: string | null;
-  created_at: string;
-  updated_at: string;
-}
+const GOAL_REF = "GL-2048";
 
-interface ObjectiveRead {
-  id: string;
-  title: string;
-  description: string | null;
-  level: string;
-  owner_id: string | null;
-  created_at: string;
-}
+const OBJECTIVES = [
+  { id: "", title: "No parent objective — standalone goal", meta: "" },
+  { id: "OBJ-07", title: "Support experience customers recommend", meta: "Company · FY26" },
+  { id: "OBJ-12", title: "Halve time-to-resolution across Tier-1", meta: "Company · FY26" },
+  {
+    id: "OBJ-21",
+    title: "Round-the-clock coverage for Support Ops",
+    meta: "Manager · Dilan Okonkwo",
+  },
+  { id: "OBJ-30", title: "Lift CSAT to 4.6 by year end", meta: "Manager · Dilan Okonkwo" },
+];
 
-interface ReportRead {
-  id: string;
-  name: string;
-  email: string;
-  role: string;
-  manager_id: string | null;
-  is_active: boolean;
-  created_at: string;
-  updated_at: string;
-}
+const DIRECT_REPORTS = [
+  { id: "u-14", name: "Priya Raghunathan", title: "Support Operations Lead" },
+  { id: "u-19", name: "Tomás Esquivel", title: "Tier-1 Shift Manager" },
+  { id: "u-23", name: "Hanne Lindqvist", title: "Knowledge & Macros" },
+  { id: "u-27", name: "Ade Balogun", title: "Support Analyst" },
+];
 
-interface FormState {
-  title: string;
-  description: string;
-  target_metric: string;
-  due_date: string;
-  progress_type: ProgressType;
-  owner_id: string;
-  parent_objective_id: string;
-}
+const OTHER_PEOPLE = [
+  { id: "u-31", name: "Marguerite Fontaine", title: "Finance · reports to Claire Mbeki" },
+  { id: "u-08", name: "Ivan Petrov", title: "Platform Engineering · reports to Noor Haddad" },
+];
 
-const EMPTY_FORM: FormState = {
-  title: "",
-  description: "",
-  target_metric: "",
-  due_date: "",
-  progress_type: "percent",
-  owner_id: "",
-  parent_objective_id: "",
+const STATUS_OPTIONS = [
+  { value: "not_started", label: "Not started" },
+  { value: "in_progress", label: "In progress" },
+  { value: "completed", label: "Completed" },
+  { value: "blocked", label: "Blocked" },
+];
+
+const INITIAL_CHECK_INS = [
+  {
+    id: "ci-1",
+    date: "14 Aug 2026",
+    sort: 20260814,
+    author: "Dilan Okonkwo",
+    note: "Baseline agreed with the Tier-1 leads: median first response was 5h 40m across July. Starting point locked, no changes to scope.",
+  },
+  {
+    id: "ci-2",
+    date: "28 Aug 2026",
+    sort: 20260828,
+    author: "Priya Raghunathan",
+    note: "Macros rewritten for the top 12 ticket reasons. Early read on those reasons only: 4h 10m.",
+  },
+  {
+    id: "ci-3",
+    date: "11 Sep 2026",
+    sort: 20260911,
+    author: "Priya Raghunathan",
+    note: "Routing moved onto the new skills matrix. Overnight queue is the remaining drag — nothing lands before 07:00 CET.",
+  },
+  {
+    id: "ci-4",
+    date: "25 Sep 2026",
+    sort: 20260925,
+    author: "Priya Raghunathan",
+    note: "Blocked on headcount for the 06:00 shift, raised with Dilan. Median holding at 3h 25m.",
+  },
+  {
+    id: "ci-5",
+    date: "09 Oct 2026",
+    sort: 20261009,
+    author: "Dilan Okonkwo",
+    note: "Two early-shift hires signed, both start 2 Nov. Treating this as unblocked from today.",
+  },
+  {
+    id: "ci-6",
+    date: "23 Oct 2026",
+    sort: 20261023,
+    author: "Priya Raghunathan",
+    note: "3h 02m median last week. Expect the early shift to take another 40 minutes out by mid-December.",
+  },
+];
+
+const INITIAL_PROGRESS_HISTORY = [
+  { id: "p-5", date: "23 Oct 2026", from: 48, to: 62, by: "Priya Raghunathan" },
+  { id: "p-4", date: "25 Sep 2026", from: 40, to: 48, by: "Priya Raghunathan" },
+  { id: "p-3", date: "11 Sep 2026", from: 25, to: 40, by: "Priya Raghunathan" },
+  { id: "p-2", date: "28 Aug 2026", from: 10, to: 25, by: "Priya Raghunathan" },
+  { id: "p-1", date: "14 Aug 2026", from: null, to: 10, by: "Dilan Okonkwo" },
+];
+
+const INITIAL_FORM = {
+  title: "Cut median first-response time on Tier-1 tickets to under 2 hours",
+  description:
+    "Rework macros, routing and shift cover so a customer raising a Tier-1 ticket hears back inside two hours, measured across the whole week rather than business hours only.",
+  target_metric:
+    "Median first response ≤ 2h 00m across all Tier-1 tickets, measured weekly (baseline 5h 40m, July 2026)",
+  due_date: "2026-12-31",
+  check_in_interval_days: "14",
+  parent_objective_id: "OBJ-21",
+  owner_id: "u-14",
 };
 
-type LoadState = "idle" | "loading" | "error";
-type SaveState = "idle" | "saving" | "saved";
-
-function statusOf(err: unknown): number | null {
-  const message = err instanceof Error ? err.message : String(err);
-  const match = /failed: (\d+)/.exec(message);
-  return match ? Number(match[1]) : null;
-}
-
-function goalToForm(g: GoalRead): FormState {
-  return {
-    title: g.title,
-    description: g.description ?? "",
-    target_metric: g.target_metric,
-    due_date: g.due_date,
-    progress_type: g.progress_type,
-    owner_id: g.owner_id ?? "",
-    parent_objective_id: g.parent_objective_id ?? "",
-  };
-}
-
-function blankFieldErrors(form: FormState): Record<string, string> {
-  const errs: Record<string, string> = {};
-  if (!form.title.trim()) errs.title = "A goal needs a title before it can be saved.";
-  if (!form.due_date) errs.due_date = "Give this goal a due date.";
-  if (!form.target_metric.trim()) errs.target_metric = "Describe the target metric for this goal.";
-  return errs;
-}
+const DIRECT_REPORT_IDS = DIRECT_REPORTS.map((p) => p.id);
+const ALL_PEOPLE = DIRECT_REPORTS.concat(OTHER_PEOPLE);
+const personName = (id) => (ALL_PEOPLE.find((p) => p.id === id) || { name: "Unassigned" }).name;
+const statusLabel = (v) => (STATUS_OPTIONS.find((s) => s.value === v) || STATUS_OPTIONS[0]).label;
+const prettyDate = (iso) => {
+  if (!iso) return "—";
+  const months = [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+    "May",
+    "Jun",
+    "Jul",
+    "Aug",
+    "Sep",
+    "Oct",
+    "Nov",
+    "Dec",
+  ];
+  const parts = iso.split("-");
+  if (parts.length !== 3) return iso;
+  return parts[2].replace(/^0/, "") + " " + months[Number(parts[1]) - 1] + " " + parts[0];
+};
 
 export default function Screen() {
-  const currentUser = React.useMemo(() => getSessionUser(), []);
-  const isManager = currentUser?.role === "manager";
+  const navigate = useNavigate();
+  const [phase, setPhase] = React.useState("loading");
+  const [tab, setTab] = React.useState("details");
 
-  const field = {
-    border: HAIRLINE,
-    borderRadius: brand.radius,
-    backgroundColor: "rgba(0,0,0,0.25)",
-    color: brand.primaryColor,
+  const [form, setForm] = React.useState(INITIAL_FORM);
+  const [savedForm, setSavedForm] = React.useState(INITIAL_FORM);
+  const [errors, setErrors] = React.useState({});
+  const [saveState, setSaveState] = React.useState("idle");
+  const [savedAt, setSavedAt] = React.useState("5 Nov 2026 · 09:41");
+
+  const [progressType, setProgressType] = React.useState("percent");
+  const [committedPercent, setCommittedPercent] = React.useState(62);
+  const [draftPercent, setDraftPercent] = React.useState(62);
+  const [committedStatus, setCommittedStatus] = React.useState("in_progress");
+  const [draftStatus, setDraftStatus] = React.useState("in_progress");
+  const [completedAt, setCompletedAt] = React.useState(null);
+  const [progressState, setProgressState] = React.useState("idle");
+  const [history, setHistory] = React.useState(INITIAL_PROGRESS_HISTORY);
+
+  const [checkIns, setCheckIns] = React.useState(INITIAL_CHECK_INS);
+  const [note, setNote] = React.useState("");
+  const [noteError, setNoteError] = React.useState("");
+  const [noteState, setNoteState] = React.useState("idle");
+  const [query, setQuery] = React.useState("");
+  const [order, setOrder] = React.useState("asc");
+
+  const timers = React.useRef([]);
+  const later = (fn, ms) => {
+    timers.current.push(setTimeout(fn, ms));
   };
-  const label = { color: brand.neutralColor, letterSpacing: "0.16em" };
-  const panel = {
-    backgroundColor: "rgba(255,255,255,0.04)",
-    border: HAIRLINE,
-    borderRadius: brand.radius,
-  };
-
-  const [goals, setGoals] = React.useState<GoalRead[] | null>(null);
-  const [goalsState, setGoalsState] = React.useState<LoadState>("idle");
-  const [goalsError, setGoalsError] = React.useState("");
-
-  const [objectives, setObjectives] = React.useState<ObjectiveRead[]>([]);
-  const [reports, setReports] = React.useState<ReportRead[]>([]);
-
-  const [editingId, setEditingId] = React.useState<string | null>(null);
-  const [form, setForm] = React.useState<FormState>(EMPTY_FORM);
-  const [savedGoal, setSavedGoal] = React.useState<GoalRead | null>(null);
-  const [errors, setErrors] = React.useState<Record<string, string>>({});
-  const [formError, setFormError] = React.useState("");
-  const [forbidden, setForbidden] = React.useState(false);
-  const [saveState, setSaveState] = React.useState<SaveState>("idle");
-
-  const loadGoals = React.useCallback(async () => {
-    setGoalsState("loading");
-    setGoalsError("");
-    try {
-      const rows = await apiFetch<GoalRead[]>("/goals");
-      setGoals(rows);
-      setGoalsState("idle");
-    } catch {
-      setGoals(null);
-      setGoalsState("error");
-      setGoalsError("Goals could not be loaded. Try again.");
-    }
-  }, []);
-
   React.useEffect(() => {
-    loadGoals();
-    apiFetch<ObjectiveRead[]>("/objectives")
-      .then(setObjectives)
-      .catch(() => setObjectives([]));
-    if (isManager && currentUser) {
-      apiFetch<ReportRead[]>(`/employees/${currentUser.id}/reports`)
-        .then(setReports)
-        .catch(() => setReports([]));
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    const t = setTimeout(() => setPhase("ready"), 620);
+    return () => {
+      clearTimeout(t);
+      timers.current.forEach(clearTimeout);
+    };
   }, []);
 
-  const update = (key: keyof FormState, value: string) => {
+  const assigneeDenied = !DIRECT_REPORT_IDS.includes(form.owner_id);
+  const dirty = JSON.stringify(form) !== JSON.stringify(savedForm);
+  const progressDirty =
+    progressType === "percent"
+      ? draftPercent !== committedPercent
+      : draftStatus !== committedStatus;
+  const willComplete =
+    (progressType === "percent" && draftPercent === 100) ||
+    (progressType === "status" && draftStatus === "completed");
+  const currentStatus =
+    progressType === "percent"
+      ? committedPercent === 100
+        ? "completed"
+        : committedPercent === 0
+          ? "not_started"
+          : "in_progress"
+      : committedStatus;
+
+  const update = (key, value) => {
     setForm((f) => ({ ...f, [key]: value }));
+    setSaveState("idle");
     setErrors((e) => {
       if (!e[key]) return e;
       const next = { ...e };
       delete next[key];
       return next;
     });
-    setSaveState("idle");
   };
 
-  const startNew = () => {
-    setEditingId(null);
-    setForm(EMPTY_FORM);
-    setSavedGoal(null);
-    setErrors({});
-    setFormError("");
-    setForbidden(false);
-    setSaveState("idle");
-  };
-
-  const selectGoal = (g: GoalRead) => {
-    setEditingId(g.id);
-    setForm(goalToForm(g));
-    setSavedGoal(g);
-    setErrors({});
-    setFormError("");
-    setForbidden(false);
-    setSaveState("idle");
-  };
-
-  const ownerName = (id: string): string => {
-    if (currentUser && id === currentUser.id) return currentUser.name;
-    const report = reports.find((r) => r.id === id);
-    return report ? report.name : id;
-  };
-
-  const parentObjectiveTitle = (id: string | null): string => {
-    if (!id) return "No parent objective";
-    const objective = objectives.find((o) => o.id === id);
-    return objective ? objective.title : "No parent objective";
-  };
-
-  const submit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setFormError("");
-    const next: Record<string, string> = {};
+  const onSaveDetails = (event) => {
+    event.preventDefault();
+    const next = {};
     if (!form.title.trim()) next.title = "A goal needs a title before it can be saved.";
-    if (!form.due_date) next.due_date = "Give this goal a due date.";
-    if (Object.keys(next).length) {
-      setErrors(next);
-      return;
-    }
-    setErrors({});
-    setSaveState("saving");
-
-    if (editingId) {
-      try {
-        const updated = await apiFetch<GoalRead>(`/goals/${editingId}`, {
-          method: "PUT",
-          body: JSON.stringify({
-            title: form.title.trim(),
-            description: form.description.trim() || null,
-            target_metric: form.target_metric.trim(),
-            due_date: form.due_date,
-            parent_objective_id: form.parent_objective_id || null,
-          }),
-        });
-        setGoals((prev) => (prev ? prev.map((g) => (g.id === updated.id ? updated : g)) : prev));
-        setSavedGoal(updated);
-        setForm(goalToForm(updated));
-        setSaveState("saved");
-      } catch (err) {
-        const status = statusOf(err);
-        if (status === 403) {
-          setForbidden(true);
-        } else if (status === 422) {
-          setErrors(blankFieldErrors(form));
-        } else {
-          setFormError("This goal could not be saved. Try again.");
-        }
-        setSaveState("idle");
-      }
-      return;
-    }
-
-    try {
-      const created = await apiFetch<GoalRead>("/goals", {
-        method: "POST",
-        body: JSON.stringify({
-          title: form.title.trim(),
-          description: form.description.trim() || null,
-          target_metric: form.target_metric.trim(),
-          due_date: form.due_date,
-          progress_type: form.progress_type,
-          owner_id: form.owner_id || null,
-          parent_objective_id: form.parent_objective_id || null,
-        }),
-      });
-      setGoals((prev) => [created, ...(prev ?? [])]);
-      setEditingId(created.id);
-      setSavedGoal(created);
-      setForm(goalToForm(created));
-      setSaveState("saved");
-    } catch (err) {
-      const status = statusOf(err);
-      if (status === 403) {
-        // AC-024: no optimistic goal row was ever added, since `goals` is
-        // only updated after a successful response.
-        setForbidden(true);
-      } else if (status === 422) {
-        setErrors(blankFieldErrors(form));
-      } else {
-        setFormError("This goal could not be saved. Try again.");
-      }
+    if (!form.due_date) next.due_date = "Give this goal a due date so check-ins can be scheduled.";
+    setErrors(next);
+    if (Object.keys(next).length || assigneeDenied) {
       setSaveState("idle");
+      return;
     }
+    setSaveState("saving");
+    later(() => {
+      setSavedForm(form);
+      setSavedAt("5 Nov 2026 · 14:22");
+      setSaveState("saved");
+    }, 700);
+  };
+
+  const onSaveProgress = () => {
+    setProgressState("saving");
+    later(() => {
+      if (progressType === "percent") {
+        setHistory((h) => [
+          {
+            id: "p-" + (h.length + 6),
+            date: "5 Nov 2026",
+            from: committedPercent,
+            to: draftPercent,
+            by: "Dilan Okonkwo",
+            fresh: true,
+          },
+          ...h,
+        ]);
+        setCommittedPercent(draftPercent);
+        setCompletedAt(draftPercent === 100 ? "5 Nov 2026" : null);
+      } else {
+        setCommittedStatus(draftStatus);
+        setCompletedAt(draftStatus === "completed" ? "5 Nov 2026" : null);
+      }
+      setProgressState("saved");
+      setSavedAt("5 Nov 2026 · 14:22");
+    }, 520);
+  };
+
+  const onAddCheckIn = (event) => {
+    event.preventDefault();
+    if (!note.trim()) {
+      setNoteError("Write a line or two first — an empty check-in tells Priya nothing.");
+      return;
+    }
+    setNoteError("");
+    setNoteState("saving");
+    later(() => {
+      setCheckIns((list) =>
+        list.concat([
+          {
+            id: "ci-" + (list.length + 1),
+            date: "5 Nov 2026",
+            sort: 20261105,
+            author: "Dilan Okonkwo",
+            note: note.trim(),
+            fresh: true,
+          },
+        ]),
+      );
+      setNote("");
+      setNoteState("saved");
+    }, 500);
+  };
+
+  const filtered = checkIns
+    .filter((c) => {
+      const q = query.trim().toLowerCase();
+      if (!q) return true;
+      return c.note.toLowerCase().includes(q) || c.author.toLowerCase().includes(q);
+    })
+    .sort((a, b) => (order === "asc" ? a.sort - b.sort : b.sort - a.sort));
+
+  const panel = {
+    backgroundColor: SURFACE,
+    border: "1px solid " + LINE,
+    borderRadius: brand.radius,
+  };
+  const fieldStyle = {
+    backgroundColor: brand.backgroundColor,
+    border: "1px solid " + LINE,
+    borderRadius: brand.radius,
+    color: brand.primaryColor,
+    fontFamily: brand.fontBody,
+  };
+  const labelStyle = {
+    color: brand.neutralColor,
+    fontSize: 11,
+    letterSpacing: "0.14em",
+    textTransform: "uppercase",
+    fontFamily: brand.fontBody,
+  };
+  const headingFont = { fontFamily: brand.fontHeading };
+
+  const statusChip = (value) => {
+    const completed = value === "completed";
+    const blocked = value === "blocked";
+    return (
+      <span
+        className="inline-flex items-center gap-2 px-3 py-1 text-[12px]"
+        style={{
+          borderRadius: 999,
+          border: "1px solid " + (completed ? brand.accentColor : LINE_STRONG),
+          backgroundColor: completed
+            ? brand.accentColor
+            : value === "in_progress"
+              ? brand.accentColor + "1f"
+              : "transparent",
+          color: completed
+            ? brand.backgroundColor
+            : value === "in_progress"
+              ? brand.accentColor
+              : brand.neutralColor,
+          fontFamily: brand.fontBody,
+        }}
+      >
+        {completed ? <Icons.Check className="h-3.5 w-3.5" aria-hidden="true" /> : null}
+        {blocked ? <Icons.AlertCircle className="h-3.5 w-3.5" aria-hidden="true" /> : null}
+        {statusLabel(value)}
+      </span>
+    );
   };
 
   return (
     <div
-      className="min-h-full px-6 py-10 lg:px-10"
+      className="min-h-full px-6 py-8 lg:px-10"
       style={{
         backgroundColor: brand.backgroundColor,
         color: brand.primaryColor,
         fontFamily: brand.fontBody,
       }}
     >
-      <div className="mx-auto w-full max-w-[1100px] space-y-10">
-        <header className="flex flex-wrap items-end justify-between gap-4">
-          <div>
-            <p className="text-xs uppercase" style={label}>
-              Goals
+      <style>{`
+        .v-focus:focus-visible { outline: 2px solid ${brand.accentColor}; outline-offset: 2px; }
+        .v-enter { animation: vEnter .34s ease-out both; }
+        @keyframes vEnter { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+        .v-skel { animation: vPulse 1.7s ease-in-out infinite; }
+        @keyframes vPulse { 0%,100% { opacity:.28 } 50% { opacity:.6 } }
+        .v-bar { transition: width .4s cubic-bezier(.3,.8,.4,1); }
+        .v-range { accent-color: ${brand.accentColor}; }
+        @media (prefers-reduced-motion: reduce) {
+          .v-enter, .v-skel { animation: none; }
+          .v-bar { transition: none; }
+        }
+      `}</style>
+
+      <div className="mx-auto w-full max-w-[1180px]">
+        <button
+          type="button"
+          onClick={() => navigate("dashboard")}
+          className="v-focus inline-flex items-center gap-2 text-[13px] mb-6 hover:opacity-100 opacity-80 transition-opacity"
+          style={{ color: brand.neutralColor, borderRadius: brand.radius }}
+        >
+          <Icons.ArrowLeft className="h-4 w-4" aria-hidden="true" />
+          My goals dashboard
+        </button>
+
+        {phase === "loading" ? (
+          <div aria-live="polite">
+            <p style={labelStyle} className="mb-3">
+              Opening goal {GOAL_REF}
             </p>
-            <h1 className="mt-2 text-3xl" style={{ fontFamily: brand.fontHeading }}>
-              {editingId ? "Edit goal" : "New goal"}
-            </h1>
+            <div
+              className="v-skel h-9 w-3/4 mb-8"
+              style={{ backgroundColor: SURFACE_2, borderRadius: brand.radius }}
+            />
+            <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_320px]">
+              <div className="v-skel h-[420px]" style={{ ...panel }} />
+              <div className="v-skel h-[280px]" style={{ ...panel }} />
+            </div>
+            <p className="mt-6 text-[13px]" style={{ color: brand.neutralColor }}>
+              Fetching the SMART fields, progress history and check-ins for this goal.
+            </p>
           </div>
-          <Button type="button" variant="secondary" onClick={startNew}>
-            New goal
-          </Button>
-        </header>
-
-        {forbidden ? (
-          <Card style={panel}>
-            <CardContent>
-              <Empty
-                title="Not permitted"
-                description="You are not permitted to create or update this goal. Choose an owner within your reporting line."
-              />
-            </CardContent>
-          </Card>
-        ) : null}
-
-        <Card style={panel}>
-          <CardHeader>
-            <CardTitle style={{ color: brand.primaryColor, fontFamily: brand.fontHeading }}>
-              {editingId ? "Goal details" : "Create a SMART goal"}
-            </CardTitle>
-            <CardDescription style={{ color: brand.neutralColor }}>
-              Title, target metric and due date are required.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form className="space-y-5" onSubmit={submit} noValidate>
-              <div>
-                <Label htmlFor="goal-title" style={label} className="block text-xs uppercase">
-                  Title
-                </Label>
-                <Input
-                  id="goal-title"
-                  value={form.title}
-                  onChange={(e) => update("title", e.target.value)}
-                  className="mt-2 w-full px-3 py-2"
-                  style={field}
-                />
-                {errors.title ? (
-                  <p role="alert" className="mt-2 text-sm" style={{ color: "#cf8171" }}>
-                    {errors.title}
-                  </p>
-                ) : null}
-              </div>
-
-              <div>
-                <Label htmlFor="goal-description" style={label} className="block text-xs uppercase">
-                  Description
-                </Label>
-                <Textarea
-                  id="goal-description"
-                  value={form.description}
-                  onChange={(e) => update("description", e.target.value)}
-                  className="mt-2 w-full px-3 py-2"
-                  style={field}
-                />
-              </div>
-
-              <div>
-                <Label
-                  htmlFor="goal-target-metric"
-                  style={label}
-                  className="block text-xs uppercase"
+        ) : (
+          <React.Fragment>
+            {/* ---------------- Header ---------------- */}
+            <header className="mb-10">
+              <div className="flex flex-wrap items-center gap-3 mb-4">
+                <span
+                  className="text-[12px] tracking-[0.2em]"
+                  style={{ color: brand.accentColor, fontVariantNumeric: "tabular-nums" }}
                 >
-                  Target metric
-                </Label>
-                <Input
-                  id="goal-target-metric"
-                  value={form.target_metric}
-                  onChange={(e) => update("target_metric", e.target.value)}
-                  className="mt-2 w-full px-3 py-2"
-                  style={field}
-                />
-                {errors.target_metric ? (
-                  <p role="alert" className="mt-2 text-sm" style={{ color: "#cf8171" }}>
-                    {errors.target_metric}
-                  </p>
-                ) : null}
+                  GOAL {GOAL_REF}
+                </span>
+                <span aria-hidden="true" style={{ color: LINE_STRONG }}>
+                  /
+                </span>
+                {statusChip(currentStatus)}
+                <span
+                  className="inline-flex items-center gap-2 text-[12px] px-3 py-1"
+                  style={{
+                    border: "1px solid " + LINE,
+                    borderRadius: 999,
+                    color: brand.neutralColor,
+                  }}
+                >
+                  <Icons.Clock className="h-3.5 w-3.5" aria-hidden="true" />
+                  Check-in due 6 Nov
+                </span>
+                {dirty || progressDirty ? (
+                  <span
+                    className="v-enter inline-flex items-center gap-2 text-[12px] px-3 py-1"
+                    style={{
+                      border: "1px dashed " + LINE_STRONG,
+                      borderRadius: 999,
+                      color: brand.neutralColor,
+                    }}
+                  >
+                    Unsaved edits — not yet sent to the server
+                  </span>
+                ) : (
+                  <span
+                    className="text-[12px]"
+                    style={{ color: brand.neutralColor, fontVariantNumeric: "tabular-nums" }}
+                  >
+                    Synced {savedAt}
+                  </span>
+                )}
               </div>
 
-              <div className="grid gap-5 sm:grid-cols-2">
-                <div>
-                  <Label htmlFor="goal-due-date" style={label} className="block text-xs uppercase">
-                    Due date
-                  </Label>
-                  <Input
-                    id="goal-due-date"
-                    type="date"
-                    value={form.due_date}
-                    onChange={(e) => update("due_date", e.target.value)}
-                    className="mt-2 w-full px-3 py-2"
-                    style={field}
-                  />
-                  {errors.due_date ? (
-                    <p role="alert" className="mt-2 text-sm" style={{ color: "#cf8171" }}>
-                      {errors.due_date}
+              <h1
+                className="text-[34px] lg:text-[40px] leading-[1.15] max-w-[22ch]"
+                style={{ ...headingFont, color: brand.primaryColor }}
+              >
+                {savedForm.title || "Untitled goal"}
+              </h1>
+
+              <div
+                className="mt-5 flex flex-wrap items-center gap-x-8 gap-y-3 text-[13px]"
+                style={{ color: brand.neutralColor }}
+              >
+                <span className="inline-flex items-center gap-2">
+                  <Avatar name={personName(savedForm.owner_id)} className="h-7 w-7" />
+                  <span style={{ color: brand.primaryColor }}>
+                    {personName(savedForm.owner_id)}
+                  </span>
+                  <span>owns this goal</span>
+                </span>
+                <span
+                  className="inline-flex items-center gap-2"
+                  style={{ fontVariantNumeric: "tabular-nums" }}
+                >
+                  <Icons.Calendar className="h-4 w-4" aria-hidden="true" />
+                  Due {prettyDate(savedForm.due_date)}
+                </span>
+                <span className="inline-flex items-center gap-2">
+                  <Icons.FileText className="h-4 w-4" aria-hidden="true" />
+                  {savedForm.parent_objective_id
+                    ? (OBJECTIVES.find((o) => o.id === savedForm.parent_objective_id) || {}).title
+                    : "Standalone goal — no parent objective"}
+                </span>
+              </div>
+            </header>
+
+            <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_320px] items-start">
+              <div className="min-w-0">
+                {/* ---------------- Progress: the focal panel ---------------- */}
+                <section
+                  aria-labelledby="progress-heading"
+                  className="p-6 lg:p-8 mb-8"
+                  style={panel}
+                >
+                  <div className="flex items-start justify-between gap-6 flex-wrap">
+                    <div>
+                      <h2
+                        id="progress-heading"
+                        className="text-[24px] leading-tight"
+                        style={headingFont}
+                      >
+                        Progress
+                      </h2>
+                      <p className="mt-1 text-[13px]" style={{ color: brand.neutralColor }}>
+                        Track this goal by percentage or by status — one or the other, not both.
+                      </p>
+                    </div>
+                    <div
+                      role="group"
+                      aria-label="Progress type"
+                      className="flex"
+                      style={{ border: "1px solid " + LINE, borderRadius: brand.radius }}
+                    >
+                      {[
+                        { key: "percent", label: "Percentage" },
+                        { key: "status", label: "Status" },
+                      ].map((opt) => {
+                        const on = progressType === opt.key;
+                        return (
+                          <button
+                            key={opt.key}
+                            type="button"
+                            aria-pressed={on}
+                            onClick={() => {
+                              setProgressType(opt.key);
+                              setProgressState("idle");
+                            }}
+                            className="v-focus px-4 py-2 text-[13px] transition-colors"
+                            style={{
+                              backgroundColor: on ? brand.accentColor : "transparent",
+                              color: on ? brand.backgroundColor : brand.neutralColor,
+                              borderRadius: brand.radius,
+                            }}
+                          >
+                            {opt.label}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  <div className="mt-8">
+                    {progressType === "percent" ? (
+                      <div>
+                        <div className="flex items-end gap-5 flex-wrap">
+                          <span
+                            className="leading-none"
+                            style={{
+                              ...headingFont,
+                              fontSize: 64,
+                              color: brand.accentColor,
+                              fontVariantNumeric: "tabular-nums",
+                            }}
+                          >
+                            {draftPercent}
+                            <span style={{ fontSize: 28 }}>%</span>
+                          </span>
+                          <div className="pb-2 text-[13px]" style={{ color: brand.neutralColor }}>
+                            {draftPercent !== committedPercent ? (
+                              <span style={{ fontVariantNumeric: "tabular-nums" }}>
+                                Saved value {committedPercent}% — not yet committed
+                              </span>
+                            ) : (
+                              <span style={{ fontVariantNumeric: "tabular-nums" }}>
+                                Last change 23 Oct 2026, 48% → 62%
+                              </span>
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="mt-6 h-[3px] w-full" style={{ backgroundColor: LINE }}>
+                          <div
+                            className="v-bar h-full"
+                            style={{
+                              width: draftPercent + "%",
+                              backgroundColor: brand.accentColor,
+                            }}
+                          />
+                        </div>
+
+                        <div className="mt-6 flex flex-wrap items-end gap-6">
+                          <div className="flex-1 min-w-[240px]">
+                            <Label htmlFor="progress-range" style={labelStyle}>
+                              Completion slider
+                            </Label>
+                            <input
+                              id="progress-range"
+                              type="range"
+                              min="0"
+                              max="100"
+                              step="1"
+                              className="v-range v-focus w-full mt-3"
+                              value={draftPercent}
+                              onChange={(e) => {
+                                setDraftPercent(Number(e.target.value));
+                                setProgressState("idle");
+                              }}
+                              aria-describedby="progress-hint"
+                            />
+                          </div>
+                          <div className="w-[120px]">
+                            <Label htmlFor="progress-number" style={labelStyle}>
+                              Exact value
+                            </Label>
+                            <Input
+                              id="progress-number"
+                              type="number"
+                              min="0"
+                              max="100"
+                              className="v-focus mt-3 w-full px-3 py-2"
+                              style={{ ...fieldStyle, fontVariantNumeric: "tabular-nums" }}
+                              value={draftPercent}
+                              onChange={(e) => {
+                                const n = Math.max(0, Math.min(100, Number(e.target.value || 0)));
+                                setDraftPercent(n);
+                                setProgressState("idle");
+                              }}
+                            />
+                          </div>
+                        </div>
+                        <p
+                          id="progress-hint"
+                          className="mt-3 text-[13px]"
+                          style={{ color: brand.neutralColor }}
+                        >
+                          Any whole number from 0 to 100.
+                        </p>
+                      </div>
+                    ) : (
+                      <div>
+                        <div className="flex items-center gap-4 flex-wrap">
+                          <span
+                            className="leading-none"
+                            style={{ ...headingFont, fontSize: 36, color: brand.accentColor }}
+                          >
+                            {statusLabel(draftStatus)}
+                          </span>
+                          {draftStatus !== committedStatus ? (
+                            <span className="text-[13px]" style={{ color: brand.neutralColor }}>
+                              Saved value {statusLabel(committedStatus)} — not yet committed
+                            </span>
+                          ) : null}
+                        </div>
+                        <div className="mt-6 max-w-[320px]">
+                          <Label htmlFor="progress-status" style={labelStyle}>
+                            Status
+                          </Label>
+                          <Select
+                            id="progress-status"
+                            className="v-focus mt-3 w-full px-3 py-2"
+                            style={fieldStyle}
+                            value={draftStatus}
+                            onChange={(e) => {
+                              setDraftStatus(e.target.value);
+                              setProgressState("idle");
+                            }}
+                          >
+                            {STATUS_OPTIONS.map((s) => (
+                              <option
+                                key={s.value}
+                                value={s.value}
+                                style={{ backgroundColor: SURFACE }}
+                              >
+                                {s.label}
+                              </option>
+                            ))}
+                          </Select>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {willComplete ? (
+                    <p
+                      className="v-enter mt-6 pl-4 text-[13px]"
+                      style={{
+                        borderLeft: "2px solid " + brand.accentColor,
+                        color: brand.primaryColor,
+                      }}
+                    >
+                      Saving this marks the goal complete and records 5 Nov 2026 as its completion
+                      date.
                     </p>
                   ) : null}
-                </div>
 
-                <div>
-                  <Label
-                    htmlFor="goal-progress-type"
-                    style={label}
-                    className="block text-xs uppercase"
-                  >
-                    Progress type
-                  </Label>
-                  <Select
-                    id="goal-progress-type"
-                    value={form.progress_type}
-                    disabled={!!editingId}
-                    onChange={(e) => update("progress_type", e.target.value)}
-                    className="mt-2 w-full px-3 py-2"
-                    style={field}
-                    options={[
-                      { value: "percent", label: "Percent" },
-                      { value: "status", label: "Status" },
-                    ]}
-                  />
-                </div>
-              </div>
+                  {completedAt ? (
+                    <p
+                      className="v-enter mt-6 inline-flex items-center gap-2 text-[13px]"
+                      style={{ color: brand.accentColor }}
+                    >
+                      <Icons.CheckCircle className="h-4 w-4" aria-hidden="true" />
+                      Completed — completion date recorded {completedAt}
+                    </p>
+                  ) : null}
 
-              {isManager ? (
-                <div>
-                  <Label htmlFor="goal-owner" style={label} className="block text-xs uppercase">
-                    Owner
-                  </Label>
-                  <Select
-                    id="goal-owner"
-                    value={form.owner_id}
-                    onChange={(e) => update("owner_id", e.target.value)}
-                    className="mt-2 w-full px-3 py-2"
-                    style={field}
-                    options={[
-                      { value: "", label: "Select a direct report" },
-                      ...reports.map((r) => ({ value: r.id, label: r.name })),
-                    ]}
-                  />
-                </div>
-              ) : null}
+                  <div className="mt-8 flex flex-wrap items-center gap-4">
+                    <Button
+                      type="button"
+                      onClick={onSaveProgress}
+                      disabled={!progressDirty || progressState === "saving"}
+                      className="v-focus px-6 py-3 text-[14px] transition-opacity"
+                      style={{
+                        backgroundColor: brand.accentColor,
+                        color: brand.backgroundColor,
+                        borderRadius: brand.radius,
+                        opacity: !progressDirty || progressState === "saving" ? 0.45 : 1,
+                        fontWeight: 600,
+                      }}
+                    >
+                      {progressState === "saving" ? "Saving progress…" : "Save progress"}
+                    </Button>
+                    {progressState === "saved" && !progressDirty ? (
+                      <span
+                        className="v-enter inline-flex items-center gap-2 text-[13px]"
+                        style={{ color: brand.accentColor }}
+                      >
+                        <Icons.Check className="h-4 w-4" aria-hidden="true" />
+                        Progress saved to {GOAL_REF}
+                      </span>
+                    ) : !progressDirty ? (
+                      <span className="text-[13px]" style={{ color: brand.neutralColor }}>
+                        Nothing to save — the figure above matches the record.
+                      </span>
+                    ) : null}
+                  </div>
+                </section>
 
-              <div>
-                <Label
-                  htmlFor="goal-parent-objective"
-                  style={label}
-                  className="block text-xs uppercase"
-                >
-                  Parent objective
-                </Label>
-                <Select
-                  id="goal-parent-objective"
-                  value={form.parent_objective_id}
-                  onChange={(e) => update("parent_objective_id", e.target.value)}
-                  className="mt-2 w-full px-3 py-2"
-                  style={field}
-                  options={[
-                    { value: "", label: "No parent objective" },
-                    ...objectives.map((o) => ({ value: o.id, label: o.title })),
+                {/* ---------------- Tabs ---------------- */}
+                <Tabs
+                  tabs={[
+                    { key: "details", label: "Goal details" },
+                    { key: "checkins", label: "Check-ins (" + checkIns.length + ")" },
+                    { key: "history", label: "Progress history" },
                   ]}
+                  active={tab}
+                  onChange={setTab}
+                  className="mb-6"
                 />
-              </div>
 
-              {formError ? (
-                <p role="alert" className="text-sm" style={{ color: "#cf8171" }}>
-                  {formError}
-                </p>
-              ) : null}
+                {tab === "details" ? (
+                  <section aria-labelledby="details-heading" className="p-6 lg:p-8" style={panel}>
+                    <h2
+                      id="details-heading"
+                      className="text-[24px] leading-tight"
+                      style={headingFont}
+                    >
+                      SMART fields
+                    </h2>
+                    <p
+                      className="mt-1 mb-8 text-[13px] max-w-[62ch]"
+                      style={{ color: brand.neutralColor }}
+                    >
+                      Specific wording, a measurable target and a timeframe. Edits are saved against
+                      the goal record and shown to {personName(form.owner_id)} immediately.
+                    </p>
 
-              <Button type="submit" disabled={saveState === "saving"}>
-                {saveState === "saving" ? "Saving…" : editingId ? "Save changes" : "Create goal"}
-              </Button>
-            </form>
+                    <form onSubmit={onSaveDetails} noValidate>
+                      <div className="mb-6">
+                        <Label htmlFor="goal-title" style={labelStyle}>
+                          Title <span style={{ color: brand.accentColor }}>required</span>
+                        </Label>
+                        <Input
+                          id="goal-title"
+                          className="v-focus mt-3 w-full px-4 py-3 text-[15px]"
+                          style={{
+                            ...fieldStyle,
+                            borderColor: errors.title ? brand.accentColor : LINE,
+                          }}
+                          value={form.title}
+                          onChange={(e) => update("title", e.target.value)}
+                          aria-invalid={errors.title ? "true" : "false"}
+                          aria-describedby={errors.title ? "goal-title-error" : undefined}
+                        />
+                        {errors.title ? (
+                          <p
+                            id="goal-title-error"
+                            className="v-enter mt-2 inline-flex items-center gap-2 text-[13px]"
+                            style={{ color: brand.accentColor }}
+                          >
+                            <Icons.AlertCircle className="h-4 w-4" aria-hidden="true" />
+                            {errors.title}
+                          </p>
+                        ) : null}
+                      </div>
 
-            {savedGoal ? (
-              <div className="mt-8" style={{ borderTop: HAIRLINE, paddingTop: 16 }}>
-                <p role="status" className="text-sm" style={{ color: brand.accentColor }}>
-                  Saved — {savedGoal.title}
-                </p>
-                <dl className="mt-3 grid gap-2 text-sm" style={{ color: brand.neutralColor }}>
-                  <div>
-                    <dt className="inline font-medium" style={{ color: brand.primaryColor }}>
-                      Owner:{" "}
-                    </dt>
-                    <dd className="inline">{ownerName(savedGoal.owner_id)}</dd>
-                  </div>
-                  <div>
-                    <dt className="inline font-medium" style={{ color: brand.primaryColor }}>
-                      Due:{" "}
-                    </dt>
-                    <dd className="inline">{savedGoal.due_date}</dd>
-                  </div>
-                  <div>
-                    <dt className="inline font-medium" style={{ color: brand.primaryColor }}>
-                      Parent objective:{" "}
-                    </dt>
-                    <dd className="inline">
-                      {parentObjectiveTitle(savedGoal.parent_objective_id)}
-                    </dd>
-                  </div>
-                </dl>
-              </div>
-            ) : null}
-          </CardContent>
-        </Card>
+                      <div className="mb-6">
+                        <Label htmlFor="goal-description" style={labelStyle}>
+                          Description
+                        </Label>
+                        <Textarea
+                          id="goal-description"
+                          rows={4}
+                          className="v-focus mt-3 w-full px-4 py-3 text-[14px] leading-[1.6]"
+                          style={fieldStyle}
+                          value={form.description}
+                          onChange={(e) => update("description", e.target.value)}
+                        />
+                      </div>
 
-        <Card style={panel}>
-          <CardHeader>
-            <CardTitle style={{ color: brand.primaryColor, fontFamily: brand.fontHeading }}>
-              Your goals
-            </CardTitle>
-            <CardDescription style={{ color: brand.neutralColor }}>
-              Select a goal below to edit it.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {goalsState === "error" && goalsError ? (
-              <p role="alert" className="mb-4 text-sm" style={{ color: "#cf8171" }}>
-                {goalsError}
-              </p>
-            ) : null}
+                      <div className="mb-6">
+                        <Label htmlFor="goal-metric" style={labelStyle}>
+                          Target metric
+                        </Label>
+                        <Textarea
+                          id="goal-metric"
+                          rows={2}
+                          className="v-focus mt-3 w-full px-4 py-3 text-[14px] leading-[1.6]"
+                          style={fieldStyle}
+                          value={form.target_metric}
+                          onChange={(e) => update("target_metric", e.target.value)}
+                          aria-describedby="metric-hint"
+                        />
+                        <p
+                          id="metric-hint"
+                          className="mt-2 text-[13px]"
+                          style={{ color: brand.neutralColor }}
+                        >
+                          State the number and how it is measured, so progress is not a matter of
+                          opinion.
+                        </p>
+                      </div>
 
-            {goalsState === "loading" && !goals ? (
-              <p className="text-sm" style={{ color: brand.neutralColor }}>
-                Loading goals…
-              </p>
-            ) : goals && goals.length > 0 ? (
-              <Table>
-                <THead>
-                  <TR>
-                    <TH>Title</TH>
-                    <TH>Due date</TH>
-                    <TH>Status</TH>
-                    <TH>Actions</TH>
-                  </TR>
-                </THead>
-                <TBody>
-                  {goals.map((g) => (
-                    <TR key={g.id}>
-                      <TD>{g.title}</TD>
-                      <TD>{g.due_date}</TD>
-                      <TD>{g.status}</TD>
-                      <TD>
-                        <Button type="button" variant="secondary" onClick={() => selectGoal(g)}>
-                          Edit
+                      <div className="grid gap-6 sm:grid-cols-2 mb-6">
+                        <div>
+                          <Label htmlFor="goal-due" style={labelStyle}>
+                            Due date <span style={{ color: brand.accentColor }}>required</span>
+                          </Label>
+                          <Input
+                            id="goal-due"
+                            type="date"
+                            className="v-focus mt-3 w-full px-4 py-3 text-[14px]"
+                            style={{
+                              ...fieldStyle,
+                              borderColor: errors.due_date ? brand.accentColor : LINE,
+                              fontVariantNumeric: "tabular-nums",
+                            }}
+                            value={form.due_date}
+                            onChange={(e) => update("due_date", e.target.value)}
+                            aria-invalid={errors.due_date ? "true" : "false"}
+                            aria-describedby={errors.due_date ? "goal-due-error" : undefined}
+                          />
+                          {errors.due_date ? (
+                            <p
+                              id="goal-due-error"
+                              className="v-enter mt-2 inline-flex items-center gap-2 text-[13px]"
+                              style={{ color: brand.accentColor }}
+                            >
+                              <Icons.AlertCircle className="h-4 w-4" aria-hidden="true" />
+                              {errors.due_date}
+                            </p>
+                          ) : null}
+                        </div>
+                        <div>
+                          <Label htmlFor="goal-cadence" style={labelStyle}>
+                            Check-in every (days)
+                          </Label>
+                          <Input
+                            id="goal-cadence"
+                            type="number"
+                            min="1"
+                            className="v-focus mt-3 w-full px-4 py-3 text-[14px]"
+                            style={{ ...fieldStyle, fontVariantNumeric: "tabular-nums" }}
+                            value={form.check_in_interval_days}
+                            onChange={(e) => update("check_in_interval_days", e.target.value)}
+                          />
+                        </div>
+                      </div>
+
+                      <div className="mb-6">
+                        <Label htmlFor="goal-parent" style={labelStyle}>
+                          Parent objective (optional)
+                        </Label>
+                        <Select
+                          id="goal-parent"
+                          className="v-focus mt-3 w-full px-4 py-3 text-[14px]"
+                          style={fieldStyle}
+                          value={form.parent_objective_id}
+                          onChange={(e) => update("parent_objective_id", e.target.value)}
+                        >
+                          {OBJECTIVES.map((o) => (
+                            <option
+                              key={o.id || "none"}
+                              value={o.id}
+                              style={{ backgroundColor: SURFACE }}
+                            >
+                              {o.id ? o.id + " — " + o.title + " (" + o.meta + ")" : o.title}
+                            </option>
+                          ))}
+                        </Select>
+                      </div>
+
+                      <div className="mb-2">
+                        <Label htmlFor="goal-owner" style={labelStyle}>
+                          Assigned to
+                        </Label>
+                        <Select
+                          id="goal-owner"
+                          className="v-focus mt-3 w-full px-4 py-3 text-[14px]"
+                          style={{
+                            ...fieldStyle,
+                            borderColor: assigneeDenied ? brand.accentColor : LINE,
+                          }}
+                          value={form.owner_id}
+                          onChange={(e) => update("owner_id", e.target.value)}
+                          aria-describedby={assigneeDenied ? "assignee-denied" : undefined}
+                        >
+                          <optgroup label="Your direct reports">
+                            {DIRECT_REPORTS.map((p) => (
+                              <option key={p.id} value={p.id} style={{ backgroundColor: SURFACE }}>
+                                {p.name} — {p.title}
+                              </option>
+                            ))}
+                          </optgroup>
+                          <optgroup label="Elsewhere in the organisation">
+                            {OTHER_PEOPLE.map((p) => (
+                              <option key={p.id} value={p.id} style={{ backgroundColor: SURFACE }}>
+                                {p.name} — {p.title}
+                              </option>
+                            ))}
+                          </optgroup>
+                        </Select>
+                      </div>
+
+                      {assigneeDenied ? (
+                        <div
+                          id="assignee-denied"
+                          role="status"
+                          className="v-enter mt-5 p-5"
+                          style={{
+                            backgroundColor: SURFACE_2,
+                            border: "1px solid " + brand.accentColor,
+                            borderRadius: brand.radius,
+                          }}
+                        >
+                          <h3
+                            className="text-[16px] inline-flex items-center gap-2"
+                            style={headingFont}
+                          >
+                            <Icons.AlertCircle
+                              className="h-4 w-4"
+                              aria-hidden="true"
+                              style={{ color: brand.accentColor }}
+                            />
+                            You can only assign goals inside your reporting line
+                          </h3>
+                          <p
+                            className="mt-2 text-[13px] leading-[1.6] max-w-[62ch]"
+                            style={{ color: brand.neutralColor }}
+                          >
+                            {personName(form.owner_id)} does not report to you, so this goal cannot
+                            be moved to them. Priya Raghunathan, Tomás Esquivel, Hanne Lindqvist and
+                            Ade Balogun are your direct reports. If the reporting line is wrong, an
+                            HR admin can correct it in People admin.
+                          </p>
+                          <div className="mt-4 flex flex-wrap gap-3">
+                            <Button
+                              type="button"
+                              onClick={() => update("owner_id", savedForm.owner_id)}
+                              className="v-focus px-4 py-2 text-[13px]"
+                              style={{
+                                backgroundColor: "transparent",
+                                border: "1px solid " + LINE_STRONG,
+                                color: brand.primaryColor,
+                                borderRadius: brand.radius,
+                              }}
+                            >
+                              Put it back to {personName(savedForm.owner_id)}
+                            </Button>
+                            <Button
+                              type="button"
+                              onClick={() => navigate("employees")}
+                              className="v-focus px-4 py-2 text-[13px]"
+                              style={{
+                                backgroundColor: "transparent",
+                                color: brand.accentColor,
+                                borderRadius: brand.radius,
+                              }}
+                            >
+                              Open People admin
+                            </Button>
+                          </div>
+                        </div>
+                      ) : null}
+
+                      <div className="mt-8" style={{ borderTop: "1px solid " + LINE }} />
+
+                      <div className="mt-6 flex flex-wrap items-center gap-4">
+                        <Button
+                          type="submit"
+                          disabled={saveState === "saving" || assigneeDenied}
+                          className="v-focus px-6 py-3 text-[14px]"
+                          style={{
+                            backgroundColor: brand.accentColor,
+                            color: brand.backgroundColor,
+                            borderRadius: brand.radius,
+                            fontWeight: 600,
+                            opacity: saveState === "saving" || assigneeDenied ? 0.45 : 1,
+                          }}
+                        >
+                          {saveState === "saving" ? "Saving changes…" : "Save changes"}
                         </Button>
-                      </TD>
-                    </TR>
-                  ))}
-                </TBody>
-              </Table>
-            ) : goals && goals.length === 0 ? (
-              <Empty title="No goals yet" description="Create your first goal above." />
-            ) : null}
-          </CardContent>
-        </Card>
+                        <Button
+                          type="button"
+                          onClick={() => {
+                            setForm(savedForm);
+                            setErrors({});
+                            setSaveState("idle");
+                          }}
+                          disabled={!dirty}
+                          className="v-focus px-5 py-3 text-[14px]"
+                          style={{
+                            backgroundColor: "transparent",
+                            border: "1px solid " + LINE,
+                            color: brand.neutralColor,
+                            borderRadius: brand.radius,
+                            opacity: dirty ? 1 : 0.4,
+                          }}
+                        >
+                          Discard edits
+                        </Button>
+                        <span
+                          aria-live="polite"
+                          className="text-[13px]"
+                          style={{ color: brand.neutralColor }}
+                        >
+                          {saveState === "saved" && !dirty ? (
+                            <span
+                              className="v-enter inline-flex items-center gap-2"
+                              style={{ color: brand.accentColor }}
+                            >
+                              <Icons.Check className="h-4 w-4" aria-hidden="true" />
+                              Saved — {GOAL_REF} updated {savedAt}
+                            </span>
+                          ) : (
+                            <span style={{ fontVariantNumeric: "tabular-nums" }}>
+                              Last saved {savedAt} by Dilan Okonkwo
+                            </span>
+                          )}
+                        </span>
+                      </div>
+                    </form>
+                  </section>
+                ) : null}
+
+                {tab === "checkins" ? (
+                  <section aria-labelledby="checkins-heading" className="p-6 lg:p-8" style={panel}>
+                    <div className="flex items-start justify-between gap-6 flex-wrap">
+                      <div>
+                        <h2
+                          id="checkins-heading"
+                          className="text-[24px] leading-tight"
+                          style={headingFont}
+                        >
+                          Check-ins
+                        </h2>
+                        <p className="mt-1 text-[13px]" style={{ color: brand.neutralColor }}>
+                          Every fortnight, oldest first. {checkIns.length} notes since 14 Aug 2026.
+                        </p>
+                      </div>
+                      <div className="flex items-end gap-3 flex-wrap">
+                        <div>
+                          <Label htmlFor="checkin-filter" style={labelStyle}>
+                            Filter notes
+                          </Label>
+                          <div className="relative mt-2">
+                            <Icons.Search
+                              className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2"
+                              aria-hidden="true"
+                              style={{ color: brand.neutralColor }}
+                            />
+                            <Input
+                              id="checkin-filter"
+                              className="v-focus pl-9 pr-3 py-2 text-[13px] w-[200px]"
+                              style={fieldStyle}
+                              value={query}
+                              onChange={(e) => setQuery(e.target.value)}
+                              placeholder="e.g. blocked"
+                            />
+                          </div>
+                        </div>
+                        <Button
+                          type="button"
+                          onClick={() => setOrder((o) => (o === "asc" ? "desc" : "asc"))}
+                          className="v-focus px-4 py-2 text-[13px] whitespace-nowrap"
+                          style={{
+                            backgroundColor: "transparent",
+                            border: "1px solid " + LINE,
+                            color: brand.primaryColor,
+                            borderRadius: brand.radius,
+                          }}
+                        >
+                          {order === "asc" ? "Oldest first" : "Newest first"}
+                        </Button>
+                      </div>
+                    </div>
+
+                    <div className="mt-8">
+                      {checkIns.length === 0 ? (
+                        <Empty
+                          title="No check-ins on this goal yet"
+                          description="Check-ins are the written record of how this goal moved. Add the first one below — a sentence on progress and anything in the way is enough."
+                        />
+                      ) : filtered.length === 0 ? (
+                        <Empty
+                          title={"Nothing matches “" + query.trim() + "”"}
+                          description={
+                            "None of the " +
+                            checkIns.length +
+                            " check-ins on this goal mention that. Try another word, or clear the filter to read the full history."
+                          }
+                          action={
+                            <Button
+                              type="button"
+                              onClick={() => setQuery("")}
+                              className="v-focus px-4 py-2 text-[13px]"
+                              style={{
+                                backgroundColor: "transparent",
+                                border: "1px solid " + LINE_STRONG,
+                                color: brand.primaryColor,
+                                borderRadius: brand.radius,
+                              }}
+                            >
+                              Clear filter
+                            </Button>
+                          }
+                        />
+                      ) : (
+                        <ol className="m-0 p-0 list-none">
+                          {filtered.map((c, i) => (
+                            <li
+                              key={c.id}
+                              className={c.fresh ? "v-enter py-5" : "py-5"}
+                              style={{ borderTop: i === 0 ? "none" : "1px solid " + LINE }}
+                            >
+                              <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
+                                <span
+                                  className="text-[12px] tracking-[0.12em]"
+                                  style={{
+                                    color: brand.accentColor,
+                                    fontVariantNumeric: "tabular-nums",
+                                  }}
+                                >
+                                  {c.date.toUpperCase()}
+                                </span>
+                                <span className="text-[13px]" style={{ color: brand.neutralColor }}>
+                                  {c.author}
+                                </span>
+                              </div>
+                              <p
+                                className="mt-2 text-[14px] leading-[1.65] max-w-[68ch]"
+                                style={{ color: brand.primaryColor }}
+                              >
+                                {c.note}
+                              </p>
+                            </li>
+                          ))}
+                        </ol>
+                      )}
+                    </div>
+
+                    <div className="mt-8 pt-8" style={{ borderTop: "1px solid " + LINE }}>
+                      <h3 className="text-[18px]" style={headingFont}>
+                        Add a check-in
+                      </h3>
+                      <form onSubmit={onAddCheckIn} className="mt-4">
+                        <Label htmlFor="new-checkin" style={labelStyle}>
+                          Note — dated 5 Nov 2026, posted as Dilan Okonkwo
+                        </Label>
+                        <Textarea
+                          id="new-checkin"
+                          rows={3}
+                          className="v-focus mt-3 w-full px-4 py-3 text-[14px] leading-[1.6]"
+                          style={{
+                            ...fieldStyle,
+                            borderColor: noteError ? brand.accentColor : LINE,
+                          }}
+                          value={note}
+                          onChange={(e) => {
+                            setNote(e.target.value);
+                            setNoteError("");
+                            setNoteState("idle");
+                          }}
+                          placeholder="Where the number stands this fortnight, and anything blocking it."
+                          aria-invalid={noteError ? "true" : "false"}
+                          aria-describedby={noteError ? "checkin-error" : undefined}
+                        />
+                        {noteError ? (
+                          <p
+                            id="checkin-error"
+                            className="v-enter mt-2 inline-flex items-center gap-2 text-[13px]"
+                            style={{ color: brand.accentColor }}
+                          >
+                            <Icons.AlertCircle className="h-4 w-4" aria-hidden="true" />
+                            {noteError}
+                          </p>
+                        ) : null}
+                        <div className="mt-4 flex flex-wrap items-center gap-4">
+                          <Button
+                            type="submit"
+                            disabled={noteState === "saving"}
+                            className="v-focus px-5 py-2.5 text-[14px]"
+                            style={{
+                              backgroundColor: "transparent",
+                              border: "1px solid " + brand.accentColor,
+                              color: brand.accentColor,
+                              borderRadius: brand.radius,
+                              opacity: noteState === "saving" ? 0.5 : 1,
+                            }}
+                          >
+                            {noteState === "saving" ? "Posting…" : "Post check-in"}
+                          </Button>
+                          <span
+                            aria-live="polite"
+                            className="text-[13px]"
+                            style={{ color: brand.neutralColor }}
+                          >
+                            {noteState === "saved"
+                              ? "Check-in posted to the history above."
+                              : "Posted notes cannot be edited."}
+                          </span>
+                        </div>
+                      </form>
+                    </div>
+                  </section>
+                ) : null}
+
+                {tab === "history" ? (
+                  <section aria-labelledby="history-heading" className="p-6 lg:p-8" style={panel}>
+                    <h2
+                      id="history-heading"
+                      className="text-[24px] leading-tight"
+                      style={headingFont}
+                    >
+                      Progress history
+                    </h2>
+                    <p className="mt-1 mb-6 text-[13px]" style={{ color: brand.neutralColor }}>
+                      Every saved change to this goal's completion figure, newest first.
+                    </p>
+                    <Table
+                      className="w-full text-[14px]"
+                      style={{ fontVariantNumeric: "tabular-nums" }}
+                    >
+                      <THead>
+                        <TR style={{ borderBottom: "1px solid " + LINE_STRONG }}>
+                          <TH className="text-left py-3" style={labelStyle}>
+                            Date
+                          </TH>
+                          <TH className="text-left py-3" style={labelStyle}>
+                            Change
+                          </TH>
+                          <TH className="text-left py-3" style={labelStyle}>
+                            Updated by
+                          </TH>
+                        </TR>
+                      </THead>
+                      <TBody>
+                        {history.map((h) => (
+                          <TR
+                            key={h.id}
+                            className={h.fresh ? "v-enter" : ""}
+                            style={{ borderBottom: "1px solid " + LINE }}
+                          >
+                            <TD
+                              className="py-4 pr-6 whitespace-nowrap"
+                              style={{ color: brand.neutralColor }}
+                            >
+                              {h.date}
+                            </TD>
+                            <TD className="py-4 pr-6" style={{ color: brand.primaryColor }}>
+                              {h.from === null ? "Goal created at " : h.from + "% → "}
+                              <span style={{ color: brand.accentColor }}>{h.to}%</span>
+                            </TD>
+                            <TD className="py-4" style={{ color: brand.neutralColor }}>
+                              {h.by}
+                            </TD>
+                          </TR>
+                        ))}
+                      </TBody>
+                    </Table>
+                  </section>
+                ) : null}
+              </div>
+
+              {/* ---------------- Right rail ---------------- */}
+              <aside className="space-y-6">
+                <Card style={panel} className="p-6">
+                  <CardHeader className="p-0 mb-5">
+                    <CardTitle className="text-[18px]" style={headingFont}>
+                      Goal record
+                    </CardTitle>
+                    <CardDescription
+                      className="text-[13px] mt-1"
+                      style={{ color: brand.neutralColor }}
+                    >
+                      Reference {GOAL_REF}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="p-0">
+                    <div className="grid grid-cols-2 gap-4">
+                      <Stat label="Days remaining" value="56" hint="to 31 Dec 2026" />
+                      <Stat
+                        label="Check-in cadence"
+                        value={form.check_in_interval_days + "d"}
+                        hint="next due 6 Nov"
+                      />
+                    </div>
+                    <div className="my-5" style={{ borderTop: "1px solid " + LINE }} />
+                    <dl className="text-[13px] space-y-4 m-0">
+                      <div>
+                        <dt style={labelStyle}>Owner</dt>
+                        <dd
+                          className="mt-1.5 flex items-center gap-2 m-0"
+                          style={{ color: brand.primaryColor }}
+                        >
+                          <Avatar name={personName(form.owner_id)} className="h-6 w-6" />
+                          {personName(form.owner_id)}
+                        </dd>
+                      </div>
+                      <div>
+                        <dt style={labelStyle}>Created by</dt>
+                        <dd className="mt-1.5 m-0" style={{ color: brand.primaryColor }}>
+                          Dilan Okonkwo · 14 Aug 2026
+                        </dd>
+                      </div>
+                      <div>
+                        <dt style={labelStyle}>Parent objective</dt>
+                        <dd
+                          className="mt-1.5 m-0 leading-[1.5]"
+                          style={{ color: brand.primaryColor }}
+                        >
+                          {form.parent_objective_id ? (
+                            <React.Fragment>
+                              <span
+                                style={{
+                                  color: brand.accentColor,
+                                  fontVariantNumeric: "tabular-nums",
+                                }}
+                              >
+                                {form.parent_objective_id}
+                              </span>{" "}
+                              {
+                                (OBJECTIVES.find((o) => o.id === form.parent_objective_id) || {})
+                                  .title
+                              }
+                            </React.Fragment>
+                          ) : (
+                            "None — valid as a standalone goal"
+                          )}
+                        </dd>
+                      </div>
+                      <div>
+                        <dt style={labelStyle}>Progress type</dt>
+                        <dd className="mt-1.5 m-0" style={{ color: brand.primaryColor }}>
+                          {progressType === "percent" ? "Percentage" : "Status"}
+                        </dd>
+                      </div>
+                    </dl>
+                  </CardContent>
+                </Card>
+
+                <Card style={panel} className="p-6">
+                  <CardHeader className="p-0 mb-4">
+                    <CardTitle className="text-[18px]" style={headingFont}>
+                      Elsewhere
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="p-0">
+                    <ul className="m-0 p-0 list-none">
+                      {[
+                        { label: "Priya's other goals", route: "team", icon: Icons.Users },
+                        { label: "My goals dashboard", route: "dashboard", icon: Icons.Home },
+                        { label: "Send Priya praise", route: "praise", icon: Icons.CheckCircle },
+                      ].map((link, i) => (
+                        <li
+                          key={link.route}
+                          style={{ borderTop: i === 0 ? "none" : "1px solid " + LINE }}
+                        >
+                          <button
+                            type="button"
+                            onClick={() => navigate(link.route)}
+                            className="v-focus w-full flex items-center justify-between gap-3 py-3 text-[14px] text-left transition-colors hover:opacity-100 opacity-85"
+                            style={{ color: brand.primaryColor, borderRadius: brand.radius }}
+                          >
+                            <span className="inline-flex items-center gap-3">
+                              <link.icon
+                                className="h-4 w-4"
+                                aria-hidden="true"
+                                style={{ color: brand.neutralColor }}
+                              />
+                              {link.label}
+                            </span>
+                            <Icons.ChevronRight
+                              className="h-4 w-4"
+                              aria-hidden="true"
+                              style={{ color: brand.neutralColor }}
+                            />
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  </CardContent>
+                </Card>
+              </aside>
+            </div>
+          </React.Fragment>
+        )}
       </div>
     </div>
   );
