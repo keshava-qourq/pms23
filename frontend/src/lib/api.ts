@@ -49,32 +49,6 @@ export function clearSessionToken(): void {
   }
 }
 
-// US-012.3: the goal owner's in-app reminders (AC-032/AC-034). `email_status`
-// mirrors AC-033 — "failed" means the reminder still exists even though the
-// email leg of it could not be sent (the email credential was not configured).
-export interface AppNotification {
-  id: string;
-  user_id: string;
-  type: string;
-  message: string;
-  is_read: boolean;
-  email_status: string | null;
-  created_at: string;
-}
-
-// Thrown by apiFetch on a non-2xx response. Carries the HTTP status so a
-// screen can tell "access denied" (403) apart from any other failure without
-// parsing the message text.
-export class ApiError extends Error {
-  status: number;
-
-  constructor(status: number, message: string) {
-    super(message);
-    this.name = "ApiError";
-    this.status = status;
-  }
-}
-
 export async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
   const bearer = getSessionToken() ?? API_SECRET_KEY;
   // Join with exactly one slash: API_BASE_URL is baked with a trailing slash (the API
@@ -89,51 +63,7 @@ export async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> 
     },
   });
   if (!response.ok) {
-    throw new ApiError(
-      response.status,
-      `${init?.method ?? "GET"} ${path} failed: ${response.status}`,
-    );
+    throw new Error(`${init?.method ?? "GET"} ${path} failed: ${response.status}`);
   }
   return response.status === 204 ? (undefined as T) : ((await response.json()) as T);
-}
-
-// GET /notifications — the caller's in-app notifications, newest handled by
-// the server; the dashboard renders them as it receives them.
-export function listNotifications(): Promise<AppNotification[]> {
-  return apiFetch<AppNotification[]>("/notifications");
-}
-
-// PATCH /notifications/{id}/read — marks/dismisses one in-app notification as read.
-export function markNotificationRead(id: string): Promise<AppNotification> {
-  return apiFetch<AppNotification>(`/notifications/${id}/read`, { method: "PATCH" });
-}
-
-// US-014: the manager's team dashboard (AC-038/AC-039) — each direct
-// report together with their goals and progress, as a cached aggregate.
-export interface TeamDashboardGoal {
-  id: string;
-  title: string;
-  progress_type: "percent" | "status";
-  progress_percent: number | null;
-  status: string;
-  due_date: string;
-}
-
-export interface TeamDashboardReport {
-  id: string;
-  name: string;
-  email: string;
-  goals: TeamDashboardGoal[];
-}
-
-export interface TeamDashboardResponse {
-  reports: TeamDashboardReport[];
-}
-
-// GET /dashboard/team — the caller's direct reports; a request naming an
-// `employeeId` outside the caller's reporting line fails with a 403 (surfaced
-// to callers as an ApiError whose `status` is 403).
-export function getTeamDashboard(employeeId?: string): Promise<TeamDashboardResponse> {
-  const query = employeeId ? `?employee_id=${encodeURIComponent(employeeId)}` : "";
-  return apiFetch<TeamDashboardResponse>(`/dashboard/team${query}`);
 }

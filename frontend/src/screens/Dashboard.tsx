@@ -6,7 +6,6 @@ import * as UI from "@/lib/ui";
 import { Icons } from "@/lib/icons";
 import { brand } from "@/lib/brand";
 import { useNavigate } from "@/lib/navigate";
-import { listNotifications, markNotificationRead } from "@/lib/api";
 
 const {
   Button,
@@ -75,17 +74,6 @@ const hexToRgba = (hex, a) => {
       .join("");
   const n = parseInt(h, 16);
   return `rgba(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}, ${a})`;
-};
-// Notifications arrive from the API as an ISO timestamp, not the preview's
-// hand-written "Today, 08:40" strings.
-const fmtNotifTime = (iso) => {
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return iso;
-  const day = d.getDate();
-  const month = MONTHS[d.getMonth()];
-  const hh = String(d.getHours()).padStart(2, "0");
-  const mm = String(d.getMinutes()).padStart(2, "0");
-  return `${day} ${month}, ${hh}:${mm}`;
 };
 
 const INITIAL_GOALS = [
@@ -196,6 +184,55 @@ const INITIAL_GOALS = [
   },
 ];
 
+const INITIAL_NOTIFICATIONS = [
+  {
+    id: "NT-3391",
+    type: "due_soon",
+    message:
+      "“Cut onboarding drop-off from 34% to 20%” is due in 9 days. Update your progress before Friday.",
+    created_at: "Today, 08:40",
+    is_read: false,
+    email_status: "sent",
+  },
+  {
+    id: "NT-3387",
+    type: "check_in_overdue",
+    message:
+      "No check-in on “Reduce design QA defects to under 5 per release” for 44 days. Your cadence is every 14.",
+    created_at: "Today, 07:15",
+    is_read: false,
+    email_status: "failed",
+  },
+  {
+    id: "NT-3384",
+    type: "overdue",
+    message:
+      "“Publish the accessibility audit for Billing & Settings” passed its due date on 2 Nov.",
+    created_at: "Yesterday, 18:02",
+    is_read: false,
+    email_status: "sent",
+  },
+  {
+    id: "NT-3372",
+    type: "praise",
+    message:
+      "Daniel Osei sent you praise: “The Atlas migration guide saved the Payments team a week.”",
+    created_at: "3 Nov, 16:20",
+    is_read: true,
+    email_status: "sent",
+    route: "praise",
+  },
+  {
+    id: "NT-3365",
+    type: "completed",
+    message:
+      "Goal closed: “Run 12 moderated sessions with enterprise admins” was completed on 30 Oct.",
+    created_at: "30 Oct, 11:05",
+    is_read: true,
+    email_status: "sent",
+  },
+];
+
 const SYNC_TIMES = ["09:12", "09:41", "10:06", "10:28"];
 
 export default function Screen() {
@@ -212,12 +249,7 @@ export default function Screen() {
   const sans = brand.fontBody;
 
   const [goals, setGoals] = React.useState(INITIAL_GOALS);
-  const [notifications, setNotifications] = React.useState([]);
-  // AC-034: the reminders panel has its own fetch lifecycle, independent of
-  // the goals list above — a goal-sync failure must not hide reminders, and
-  // vice versa.
-  const [notifPhase, setNotifPhase] = React.useState("loading");
-  const [notifActionError, setNotifActionError] = React.useState("");
+  const [notifications, setNotifications] = React.useState(INITIAL_NOTIFICATIONS);
   const [tab, setTab] = React.useState("all");
   const [query, setQuery] = React.useState("");
   const [editingId, setEditingId] = React.useState(null);
@@ -238,45 +270,6 @@ export default function Screen() {
     },
     [],
   );
-
-  const loadNotifications = React.useCallback(() => {
-    setNotifPhase("loading");
-    setNotifActionError("");
-    listNotifications()
-      .then((data) => {
-        setNotifications(data);
-        setNotifPhase("ready");
-      })
-      .catch(() => {
-        setNotifPhase("error");
-      });
-  }, []);
-
-  React.useEffect(() => {
-    loadNotifications();
-  }, [loadNotifications]);
-
-  const dismissNotification = (id) => {
-    setNotifActionError("");
-    markNotificationRead(id)
-      .then(() => {
-        setNotifications((prev) => prev.filter((x) => x.id !== id));
-      })
-      .catch(() => {
-        setNotifActionError("Couldn’t dismiss that reminder just now. It’s unchanged — try again.");
-      });
-  };
-
-  const markRead = (id) => {
-    setNotifActionError("");
-    markNotificationRead(id)
-      .then((updated) => {
-        setNotifications((prev) => prev.map((x) => (x.id === id ? updated : x)));
-      })
-      .catch(() => {
-        setNotifActionError("Couldn’t mark that reminder as read just now. Try again.");
-      });
-  };
 
   const syncedAt = SYNC_TIMES[Math.min(syncIdx, SYNC_TIMES.length - 1)];
 
@@ -1175,59 +1168,7 @@ export default function Screen() {
               <Separator />
             </div>
             <CardContent className="px-0 pb-2 pt-0">
-              {notifActionError && (
-                <p
-                  role="alert"
-                  className="mx-5 mb-3 flex items-start gap-2 rounded-[6px] px-4 py-3 text-sm"
-                  style={{
-                    backgroundColor: hexToRgba(SEMANTIC_CLAY, 0.1),
-                    border: `1px solid ${hexToRgba(SEMANTIC_CLAY, 0.3)}`,
-                    color: SEMANTIC_CLAY,
-                  }}
-                >
-                  <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
-                  {notifActionError}
-                </p>
-              )}
-              {notifPhase === "loading" ? (
-                <ul className="space-y-0" aria-busy="true">
-                  {[0, 1, 2].map((i) => (
-                    <li
-                      key={i}
-                      className="px-5 py-4"
-                      style={{ borderTop: i === 0 ? "none" : `1px solid ${hairlineSoft}` }}
-                    >
-                      <div
-                        className="velvet-skel"
-                        style={{ animation: "velvetSheen 1.4s ease-in-out infinite" }}
-                      >
-                        <div
-                          className="h-3 w-5/6 rounded"
-                          style={{ backgroundColor: hexToRgba(text, 0.1) }}
-                        />
-                        <div
-                          className="mt-3 h-3 w-1/3 rounded"
-                          style={{ backgroundColor: hexToRgba(text, 0.08) }}
-                        />
-                      </div>
-                      <p className="sr-only">Loading your reminders</p>
-                    </li>
-                  ))}
-                </ul>
-              ) : notifPhase === "error" ? (
-                <div className="px-5 py-8">
-                  <p role="alert" className="text-sm" style={{ color: SEMANTIC_CLAY }}>
-                    Couldn’t load your reminders just now. Your goals above are unaffected.
-                  </p>
-                  <Button
-                    onClick={loadNotifications}
-                    className={`mt-4 h-9 rounded-[6px] px-3 text-xs transition-opacity hover:opacity-80 ${focusCls}`}
-                    style={ghostBtn}
-                  >
-                    Retry
-                  </Button>
-                </div>
-              ) : shownNotifications.length === 0 ? (
+              {shownNotifications.length === 0 ? (
                 <div className="px-5 py-8">
                   <Empty
                     title={unreadOnly ? "Nothing unread" : "No reminders right now"}
@@ -1262,7 +1203,7 @@ export default function Screen() {
                             className="mt-2 flex flex-wrap items-center gap-2 text-[11px] [font-variant-numeric:tabular-nums]"
                             style={{ color: muted }}
                           >
-                            <span>{fmtNotifTime(n.created_at)}</span>
+                            <span>{n.created_at}</span>
                             <span aria-hidden="true">·</span>
                             <span style={{ color: n.is_read ? muted : accent }}>
                               {n.is_read ? "Read" : "Unread"}
@@ -1299,7 +1240,11 @@ export default function Screen() {
                             {!n.is_read && (
                               <Button
                                 aria-label={`Mark reminder ${n.id} as read`}
-                                onClick={() => markRead(n.id)}
+                                onClick={() =>
+                                  setNotifications((prev) =>
+                                    prev.map((x) => (x.id === n.id ? { ...x, is_read: true } : x)),
+                                  )
+                                }
                                 className={`inline-flex h-8 items-center gap-1.5 rounded-[6px] px-3 text-xs transition-opacity hover:opacity-80 ${focusCls}`}
                                 style={ghostBtn}
                               >
@@ -1309,7 +1254,9 @@ export default function Screen() {
                             )}
                             <Button
                               aria-label={`Dismiss reminder ${n.id}`}
-                              onClick={() => dismissNotification(n.id)}
+                              onClick={() =>
+                                setNotifications((prev) => prev.filter((x) => x.id !== n.id))
+                              }
                               className={`inline-flex h-8 w-8 items-center justify-center rounded-[6px] transition-opacity hover:opacity-80 ${focusCls}`}
                               style={ghostBtn}
                             >

@@ -169,33 +169,6 @@ class GoalRead(BaseModel):
     updated_at: datetime
 
 
-# ---- dashboard --------------------------------------------------------------
-
-
-class TeamDashboardGoal(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-
-    id: uuid.UUID
-    title: str
-    progress_type: ProgressType
-    progress_percent: int | None = None
-    status: GoalStatus
-    due_date: date
-
-
-class TeamDashboardReport(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-
-    id: uuid.UUID
-    name: str
-    email: str
-    goals: list[TeamDashboardGoal]
-
-
-class TeamDashboardResponse(BaseModel):
-    reports: list[TeamDashboardReport]
-
-
 # ---- check-ins ------------------------------------------------------------
 
 
