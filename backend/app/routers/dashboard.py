@@ -8,7 +8,7 @@ unknown employee id is a 404; an hr_admin may name anyone.
 """
 
 import uuid
-from typing import Any
+from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
@@ -24,13 +24,15 @@ router = APIRouter(prefix="/dashboard", tags=["dashboard"])
 
 
 @router.get("/me", response_model=StubResponse)
-async def personal_dashboard() -> StubResponse:
+async def personal_dashboard(
+    current_user: models.User = Depends(get_current_user),  # noqa: B008
+) -> StubResponse:
     return StubResponse(endpoint="GET /dashboard/me")
 
 
 @router.get("/team")
 async def team_dashboard(
-    employee_id: uuid.UUID | None = Query(default=None),
+    employee_id: Annotated[uuid.UUID | None, Query()] = None,
     db: Session = Depends(get_db),  # noqa: B008
     current_user: models.User = Depends(get_current_user),  # noqa: B008
 ) -> dict[str, Any]:
