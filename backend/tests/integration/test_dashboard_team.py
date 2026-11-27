@@ -5,18 +5,11 @@ AC-038 a manager's team view lists each direct report's goals together with
 their current progress. AC-039 a manager who attempts to reach an employee
 outside their reporting line is denied that employee's goal data.
 
-This story's contract gives no fixed JSON shape for GET /dashboard/team's
-success body (the approved API spec is not part of this story's reviewed
-material), so TC-001/TC-002 check the case's own wording -- the reporting
-employees' names and their progress figures appear (or, with no direct
-reports, nothing does) -- against the response body rather than against a
-guessed field layout, the same way the existing suite falls back to
-substring checks when a field name is not given (see
-backend/tests/integration/test_reminders_notifications.py). Every other
-list endpoint already proven in this suite (GET /goals, GET
-/employees/{id}/reports, GET /praise/received, GET /notifications) returns
-a bare JSON array, so TC-001/TC-002 assume GET /dashboard/team follows that
-same convention for the collection itself.
+The approved API spec fixes GET /dashboard/team's success body as
+'{reports: [...]}', one entry per direct report with that report's name
+and goals (each goal carrying its progress). TC-001/TC-002 read the
+reports out of that envelope rather than assuming the whole body is a
+bare array.
 
 Progress is set through PATCH /goals/{id}/progress, the one confirmed
 contract point for a goal's percentage (see
@@ -145,14 +138,19 @@ def test_tc001_manager_retrieves_team_view_showing_direct_reports_goals_and_prog
 
     assert response.status_code == 200, response.text
     body = response.json()
-    assert isinstance(body, list)
-    assert len(body) == 2
-    text = response.text
-    assert "Alice Grey" in text
-    assert "Bob Stone" in text
-    assert "40" in text
-    assert "100" in text
-    assert "Completed" in text
+    reports = body["reports"]
+    assert len(reports) == 2
+    reports_by_name = {r["name"]: r for r in reports}
+    assert set(reports_by_name) == {"Alice Grey", "Bob Stone"}
+    alice_goals = reports_by_name["Alice Grey"]["goals"]
+    assert any(g["title"] == alice_goal.title and g["progress_percent"] == 40 for g in alice_goals)
+    bob_goals = reports_by_name["Bob Stone"]["goals"]
+    assert any(
+        g["title"] == bob_goal.title
+        and g["progress_percent"] == 100
+        and g["status"] == "Completed"
+        for g in bob_goals
+    )
 
 
 # ============================================================================
@@ -172,7 +170,8 @@ def test_tc002_manager_with_no_direct_reports_sees_an_empty_team_view(
     response = client.get("/dashboard/team", headers=_headers(token))
 
     assert response.status_code == 200, response.text
-    assert response.json() == []
+    body = response.json()
+    assert body["reports"] == []
 
 
 # ============================================================================

@@ -104,6 +104,7 @@ def _notify(
     owner = db.query(models.User).filter(models.User.id == goal.owner_id).first()
     notification = models.Notification(
         user_id=goal.owner_id,
+        goal_id=goal.id,
         type=notification_type,
         message=message,
         is_read=False,

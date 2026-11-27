@@ -1,7 +1,9 @@
 """HR admin: employee records, reporting lines, exports and GDPR deletion."""
 
+import json
 import secrets
 import uuid
+from datetime import UTC, datetime
 
 from fastapi import APIRouter, Depends, HTTPException, Response, status
 from sqlalchemy.orm import Session
@@ -15,7 +17,6 @@ from app.schemas import (
     EmployeeUpdate,
     ManagerAssignment,
     PersonalDataDeleteRequest,
-    StubResponse,
 )
 from app.scoping import is_in_reporting_line, would_create_cycle
 from app.security import get_current_user, hash_password, require_roles
@@ -179,11 +180,72 @@ async def list_direct_reports(
     )
 
 
-@router.get("/{id}/export", response_model=StubResponse)
-async def export_employee(id: str) -> StubResponse:
-    return StubResponse(endpoint="GET /employees/{id}/export")
+@router.get("/{id}/export")
+async def export_employee(
+    id: uuid.UUID,
+    db: Session = Depends(get_db),  # noqa: B008
+    _current_user: models.User = Depends(require_roles("hr_admin")),  # noqa: B008
+) -> Response:
+    employee = _get_employee_or_404(db, id)
+    goals = db.query(models.Goal).filter(models.Goal.owner_id == employee.id).all()
+    goal_ids = [goal.id for goal in goals]
+    check_ins = (
+        db.query(models.CheckIn).filter(models.CheckIn.goal_id.in_(goal_ids)).all()
+        if goal_ids
+        else []
+    )
+    export = {
+        "employee": {
+            "id": str(employee.id),
+            "name": employee.name,
+            "email": employee.email,
+            "role": employee.role,
+        },
+        "goals": [
+            {
+                "id": str(goal.id),
+                "title": goal.title,
+                "description": goal.description,
+                "target_metric": goal.target_metric,
+                "status": goal.status,
+                "due_date": goal.due_date.isoformat(),
+            }
+            for goal in goals
+        ],
+        "check_ins": [
+            {
+                "id": str(check_in.id),
+                "goal_id": str(check_in.goal_id),
+                "note": check_in.note,
+                "created_at": check_in.created_at.isoformat(),
+            }
+            for check_in in check_ins
+        ],
+    }
+    headers = {"Content-Disposition": f'attachment; filename="employee-{employee.id}.json"'}
+    return Response(content=json.dumps(export), media_type="application/json", headers=headers)
 
 
 @router.delete("/{id}/personal-data", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_personal_data(id: str, payload: PersonalDataDeleteRequest) -> Response:
+async def delete_personal_data(
+    id: uuid.UUID,
+    payload: PersonalDataDeleteRequest,
+    db: Session = Depends(get_db),  # noqa: B008
+    current_user: models.User = Depends(require_roles("hr_admin")),  # noqa: B008
+) -> Response:
+    employee = _get_employee_or_404(db, id)
+    anonymised_suffix = uuid.uuid4().hex[:12]
+    employee.name = f"Anonymised User {anonymised_suffix}"
+    employee.email = f"anonymised-{anonymised_suffix}@anonymised.invalid"
+    employee.anonymised_at = datetime.now(UTC)
+    db.add(
+        models.AuditLog(
+            actor_id=current_user.id,
+            entity_type="employee",
+            entity_id=employee.id,
+            action="personal_data_deleted",
+            changes={"reason": payload.reason},
+        )
+    )
+    db.commit()
     return Response(status_code=status.HTTP_204_NO_CONTENT)

@@ -154,6 +154,7 @@ class Notification(Base):
 
     id = _uuid_pk()
     user_id = Column(GUID(), ForeignKey("users.id"), nullable=False)
+    goal_id = Column(GUID(), ForeignKey("goals.id"), nullable=True)
     type = Column(String(32), nullable=False)
     message = Column(Text, nullable=False)
     is_read = Column(Boolean, nullable=False, default=False)
