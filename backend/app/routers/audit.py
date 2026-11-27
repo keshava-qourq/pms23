@@ -7,7 +7,6 @@ from sqlalchemy.orm import Session
 
 from app import models
 from app.database import get_db
-from app.schemas import AuditLogEntry
 from app.security import require_roles
 
 router = APIRouter(tags=["audit"])
@@ -19,7 +18,7 @@ _LIMIT_QUERY = Query(default=50, ge=1, le=200)
 _OFFSET_QUERY = Query(default=0, ge=0)
 
 
-@router.get("/audit-log", response_model=list[AuditLogEntry])
+@router.get("/audit-log")
 async def list_audit_log(
     entity: str | None = _ENTITY_QUERY,
     from_date: date | None = _FROM_QUERY,
@@ -28,7 +27,7 @@ async def list_audit_log(
     offset: int = _OFFSET_QUERY,
     db: Session = Depends(get_db),  # noqa: B008
     _current_user: models.User = Depends(require_roles("hr_admin")),  # noqa: B008
-) -> list[AuditLogEntry]:
+) -> list[dict]:
     query = db.query(models.AuditLog, models.User.name).outerjoin(
         models.User, models.AuditLog.actor_id == models.User.id
     )
@@ -44,15 +43,15 @@ async def list_audit_log(
         )
     rows = query.order_by(models.AuditLog.created_at.desc()).offset(offset).limit(limit).all()
     return [
-        AuditLogEntry(
-            id=log.id,
-            actor_id=log.actor_id,
-            actor_name=actor_name,
-            entity_type=log.entity_type,
-            entity_id=log.entity_id,
-            action=log.action,
-            changes=log.changes,
-            created_at=log.created_at,
-        )
-        for log, actor_name in rows
+        {
+            "id": str(entry.id),
+            "actor_id": str(entry.actor_id) if entry.actor_id else None,
+            "actor_name": actor_name,
+            "entity_type": entry.entity_type,
+            "entity_id": str(entry.entity_id),
+            "action": entry.action,
+            "changes": entry.changes,
+            "created_at": entry.created_at.isoformat(),
+        }
+        for entry, actor_name in rows
     ]

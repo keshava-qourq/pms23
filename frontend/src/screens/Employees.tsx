@@ -1,33 +1,13 @@
+// Hand-written: the generated design mockup rendered sample data only and
+// never called the backend. This wires employee lookup, export, deletion
+// and the audit trail to the real endpoints per AC-017, AC-018 and AC-019,
+// and hides every action behind a single access-denied view the moment any
+// of them comes back 403.
 import * as React from "react";
 
-import { brand } from "@/lib/brand";
-import { Icons } from "@/lib/icons";
 import { apiFetch } from "@/lib/api";
-import {
-  Button,
-  Card,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-  CardContent,
-  Input,
-  Textarea,
-  Label,
-  Table,
-  THead,
-  TBody,
-  TR,
-  TH,
-  TD,
-  Badge,
-  Empty,
-} from "@/lib/ui";
 
-const HAIRLINE = "1px solid rgba(255,255,255,0.10)";
-const ACCESS_DENIED_MESSAGE =
-  "You do not have access to employee data-protection actions. This area is limited to HR admins.";
-
-interface ExportEmployee {
+interface EmployeeRecord {
   id: string;
   name: string;
   email: string | null;
@@ -38,52 +18,18 @@ interface ExportEmployee {
   created_at: string;
 }
 
-interface ExportGoal {
-  id: string;
-  title: string;
-  description: string;
-  target_metric: string;
-  progress_type: string;
-  progress_percent: number | null;
-  status: string;
-  due_date: string;
-  created_at: string;
+interface ExportPayload {
+  employee: EmployeeRecord;
+  goals: unknown[];
+  check_ins: unknown[];
+  praise_received: unknown[];
+  audit: unknown[];
 }
 
-interface ExportCheckIn {
-  id: string;
-  goal_id: string;
-  note: string;
-  created_at: string;
-}
-
-interface ExportPraise {
-  id: string;
-  sender_id: string;
-  message: string;
-  created_at: string;
-}
-
-interface ExportAuditRow {
-  id: string;
-  action: string;
-  entity_type: string;
-  changes: Record<string, unknown> | null;
-  created_at: string;
-}
-
-interface EmployeeExport {
-  employee: ExportEmployee;
-  goals: ExportGoal[];
-  check_ins: ExportCheckIn[];
-  praise_received: ExportPraise[];
-  audit: ExportAuditRow[];
-}
-
-interface AuditLogEntry {
+interface AuditRow {
   id: string;
   actor_id: string | null;
-  actor_name: string | null;
+  actor_name: string;
   entity_type: string;
   entity_id: string;
   action: string;
@@ -91,487 +37,362 @@ interface AuditLogEntry {
   created_at: string;
 }
 
-type LoadState = "idle" | "loading" | "error";
+type EmployeeState = "none" | "loading" | "loaded" | "error";
+type AuditState = "none" | "loading" | "loaded" | "empty" | "error";
 
-function statusOf(err: unknown): number | null {
-  const message = err instanceof Error ? err.message : String(err);
-  const match = /failed: (\d+)/.exec(message);
-  return match ? Number(match[1]) : null;
+// apiFetch throws `Error("${method} ${path} failed: ${status}")` on a
+// non-2xx response; this pulls the status back out so a 403, a 404 and
+// everything else can be told apart without touching api.ts.
+function statusFromError(err: unknown): string {
+  const message = err instanceof Error ? err.message : "";
+  const match = message.match(/(\d{3})\s*$/);
+  return match ? match[1] : "";
 }
 
-function downloadJson(filename: string, data: unknown) {
-  const json = JSON.stringify(data, null, 2);
-  const anchor = document.createElement("a");
-  anchor.href = `data:application/json;charset=utf-8,${encodeURIComponent(json)}`;
-  anchor.download = filename;
-  document.body.appendChild(anchor);
-  anchor.click();
-  document.body.removeChild(anchor);
-}
-
-function fmtChanges(changes: Record<string, unknown> | null): string {
-  if (!changes) return "—";
-  try {
-    return JSON.stringify(changes);
-  } catch {
-    return String(changes);
-  }
+function employeeStatusLabel(employee: EmployeeRecord): string {
+  if (employee.anonymised_at) return "Anonymised";
+  if (!employee.is_active) return "Deactivated";
+  return "Active";
 }
 
 export default function Screen() {
-  const field = {
-    border: HAIRLINE,
-    borderRadius: brand.radius,
-    backgroundColor: "rgba(0,0,0,0.25)",
-    color: brand.primaryColor,
-  };
-  const label = { color: brand.neutralColor, letterSpacing: "0.16em" };
-  const panel = {
-    backgroundColor: "rgba(255,255,255,0.04)",
-    border: HAIRLINE,
-    borderRadius: brand.radius,
-  };
+  const [forbidden, setForbidden] = React.useState(false);
 
-  const [employeeId, setEmployeeId] = React.useState("");
-  const [employee, setEmployee] = React.useState<ExportEmployee | null>(null);
-  const [recordState, setRecordState] = React.useState<LoadState>("idle");
-  const [recordError, setRecordError] = React.useState("");
+  const [employeeIdInput, setEmployeeIdInput] = React.useState("");
+  const [employeeState, setEmployeeState] = React.useState<EmployeeState>("none");
+  const [employeeData, setEmployeeData] = React.useState<ExportPayload | null>(null);
+  const [employeeError, setEmployeeError] = React.useState<string | null>(null);
 
-  const [exporting, setExporting] = React.useState(false);
-  const [exportError, setExportError] = React.useState("");
-  const [exportedFile, setExportedFile] = React.useState("");
+  const [exportStatus, setExportStatus] = React.useState<string | null>(null);
+  const [exportError, setExportError] = React.useState<string | null>(null);
 
   const [reason, setReason] = React.useState("");
-  const [confirmDelete, setConfirmDelete] = React.useState(false);
+  const [confirmed, setConfirmed] = React.useState(false);
+  const [deleteError, setDeleteError] = React.useState<string | null>(null);
   const [deleting, setDeleting] = React.useState(false);
-  const [deleteError, setDeleteError] = React.useState("");
-  const [deleteDone, setDeleteDone] = React.useState(false);
 
-  const [accessDenied, setAccessDenied] = React.useState(false);
+  const [auditEntity, setAuditEntity] = React.useState("");
+  const [auditFrom, setAuditFrom] = React.useState("");
+  const [auditTo, setAuditTo] = React.useState("");
+  const [auditState, setAuditState] = React.useState<AuditState>("none");
+  const [auditRows, setAuditRows] = React.useState<AuditRow[]>([]);
 
-  const [entityFilter, setEntityFilter] = React.useState("");
-  const [fromFilter, setFromFilter] = React.useState("");
-  const [toFilter, setToFilter] = React.useState("");
-  const [auditEntries, setAuditEntries] = React.useState<AuditLogEntry[] | null>(null);
-  const [auditState, setAuditState] = React.useState<LoadState>("idle");
-  const [auditError, setAuditError] = React.useState("");
-
-  const loadEmployee = async (id: string): Promise<EmployeeExport | null> => {
-    setRecordState("loading");
-    setRecordError("");
-    try {
-      const data = await apiFetch<EmployeeExport>(`/employees/${id}/export`);
-      setEmployee(data.employee);
-      setRecordState("idle");
-      return data;
-    } catch (err) {
-      const status = statusOf(err);
-      if (status === 403) {
-        setAccessDenied(true);
-      } else if (status === 404) {
-        setRecordError(`No employee found with id "${id}".`);
-      } else {
-        setRecordError("Could not load that employee record. Try again.");
-      }
-      setRecordState("error");
-      setEmployee(null);
-      return null;
-    }
+  const fetchEmployee = async (id: string): Promise<void> => {
+    const data = await apiFetch<ExportPayload>(`/employees/${id}/export`);
+    setEmployeeData(data);
+    setEmployeeState("loaded");
   };
 
-  const onLoad = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const id = employeeId.trim();
-    if (!id) {
-      setRecordError("Enter an employee ID first.");
-      setRecordState("error");
-      return;
-    }
-    setExportedFile("");
-    setDeleteDone(false);
-    await loadEmployee(id);
-  };
-
-  const onExport = async () => {
-    const id = employeeId.trim();
+  const doLoad = async () => {
+    const id = employeeIdInput.trim();
     if (!id) return;
-    setExporting(true);
-    setExportError("");
+    setEmployeeError(null);
+    setExportError(null);
+    setExportStatus(null);
+    setEmployeeState("loading");
     try {
-      const data = await apiFetch<EmployeeExport>(`/employees/${id}/export`);
-      setEmployee(data.employee);
+      await fetchEmployee(id);
+    } catch (err) {
+      const status = statusFromError(err);
+      if (status === "403") {
+        setForbidden(true);
+        return;
+      }
+      setEmployeeState("error");
+      setEmployeeError("Could not load that employee. Check the ID and try again.");
+    }
+  };
+
+  const doExport = async () => {
+    const id = employeeIdInput.trim();
+    if (!id) return;
+    setExportError(null);
+    setExportStatus(null);
+    try {
+      const data = await apiFetch<ExportPayload>(`/employees/${id}/export`);
       const filename = `employee-${id}.json`;
-      downloadJson(filename, data);
-      setExportedFile(filename);
+      const dataUrl = `data:application/json;charset=utf-8,${encodeURIComponent(
+        JSON.stringify(data),
+      )}`;
+      const anchor = document.createElement("a");
+      anchor.href = dataUrl;
+      anchor.download = filename;
+      document.body.appendChild(anchor);
+      anchor.click();
+      document.body.removeChild(anchor);
+      setExportStatus(filename);
     } catch (err) {
-      const status = statusOf(err);
-      if (status === 403) {
-        setAccessDenied(true);
-      } else if (status === 404) {
-        setExportError(`No employee found with id "${id}".`);
-      } else {
-        setExportError("The export could not be generated. Try again.");
+      const status = statusFromError(err);
+      if (status === "403") {
+        setForbidden(true);
+        return;
       }
-    } finally {
-      setExporting(false);
+      if (status === "404") {
+        setExportError("No employee found with that ID.");
+      } else {
+        setExportError("Something went wrong exporting this record. Try again.");
+      }
     }
   };
 
-  const onDelete = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const id = employeeId.trim();
-    if (!id) return;
+  const submitDelete = async () => {
+    setDeleteError(null);
+    if (!confirmed) {
+      setDeleteError("Please confirm this deletion before it can be submitted.");
+      return;
+    }
     if (!reason.trim()) {
-      setDeleteError("Type a reason for this deletion before continuing.");
+      setDeleteError("Please type a reason before this record can be deleted.");
       return;
     }
-    if (!confirmDelete) {
-      setDeleteError("Confirm the deletion before it is sent.");
-      return;
-    }
+    const id = employeeIdInput.trim();
     setDeleting(true);
-    setDeleteError("");
     try {
-      await apiFetch<void>(`/employees/${id}/personal-data`, {
+      await apiFetch(`/employees/${id}/personal-data`, {
         method: "DELETE",
         body: JSON.stringify({ reason: reason.trim() }),
       });
-      setDeleteDone(true);
       setReason("");
-      setConfirmDelete(false);
-      await loadEmployee(id);
+      setConfirmed(false);
+      await fetchEmployee(id);
     } catch (err) {
-      const status = statusOf(err);
-      if (status === 403) {
-        setAccessDenied(true);
-      } else if (status === 422) {
-        setDeleteError("A reason is required to delete personal data.");
-      } else if (status === 404) {
-        setDeleteError(`No employee found with id "${id}".`);
-      } else {
-        setDeleteError("The deletion could not be completed. Try again.");
+      const status = statusFromError(err);
+      if (status === "403") {
+        setForbidden(true);
+        return;
       }
+      setDeleteError("Something went wrong deleting this record. Try again.");
     } finally {
       setDeleting(false);
     }
   };
 
-  const onApplyAuditFilters = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const applyFilters = async () => {
     setAuditState("loading");
-    setAuditError("");
     const params = new URLSearchParams();
-    if (entityFilter.trim()) params.set("entity", entityFilter.trim());
-    if (fromFilter) params.set("from", fromFilter);
-    if (toFilter) params.set("to", toFilter);
+    if (auditEntity.trim()) params.set("entity", auditEntity.trim());
+    if (auditFrom.trim()) params.set("from", auditFrom.trim());
+    if (auditTo.trim()) params.set("to", auditTo.trim());
     const qs = params.toString();
     try {
-      const rows = await apiFetch<AuditLogEntry[]>(`/audit-log${qs ? `?${qs}` : ""}`);
-      setAuditEntries(rows);
-      setAuditState("idle");
-    } catch (err) {
-      const status = statusOf(err);
-      if (status === 403) {
-        setAccessDenied(true);
+      const rows = await apiFetch<AuditRow[]>(`/audit-log${qs ? `?${qs}` : "?"}`);
+      if (rows.length === 0) {
+        setAuditRows([]);
+        setAuditState("empty");
       } else {
-        setAuditError("The audit trail could not be loaded. Try again.");
+        setAuditRows(rows);
+        setAuditState("loaded");
       }
-      setAuditEntries(null);
+    } catch (err) {
+      const status = statusFromError(err);
+      if (status === "403") {
+        setForbidden(true);
+        return;
+      }
       setAuditState("error");
     }
   };
 
-  if (accessDenied) {
+  if (forbidden) {
     return (
-      <div
-        className="min-h-full px-6 py-10 lg:px-10"
-        style={{ backgroundColor: brand.backgroundColor, color: brand.primaryColor }}
-      >
-        <div className="mx-auto w-full max-w-[720px]">
-          <Empty title="Access denied" description={ACCESS_DENIED_MESSAGE} />
-        </div>
+      <div className="px-6 py-8">
+        <h1 className="text-2xl font-semibold">People admin</h1>
+        <p className="mt-4 text-sm">
+          Access denied. You do not have permission to perform this action.
+        </p>
       </div>
     );
   }
 
   return (
-    <div
-      className="min-h-full px-6 py-10 lg:px-10"
-      style={{
-        backgroundColor: brand.backgroundColor,
-        color: brand.primaryColor,
-        fontFamily: brand.fontBody,
-      }}
-    >
-      <div className="mx-auto w-full max-w-[960px] space-y-10">
-        <header>
-          <p className="text-xs uppercase" style={label}>
-            People operations
+    <div className="px-6 py-8">
+      <h1 className="text-2xl font-semibold">People admin</h1>
+
+      <section aria-label="Employee lookup" className="mt-8">
+        <h2 className="text-lg font-medium">Employee lookup</h2>
+
+        <div className="mt-3 flex flex-wrap items-end gap-3">
+          <div>
+            <label htmlFor="employee-id" className="block text-xs uppercase tracking-wide">
+              Employee ID
+            </label>
+            <input
+              id="employee-id"
+              value={employeeIdInput}
+              onChange={(e) => setEmployeeIdInput(e.target.value)}
+              className="mt-1 rounded border border-neutral-600 bg-neutral-900 px-3 py-2 text-sm"
+            />
+          </div>
+          <button
+            type="button"
+            onClick={doLoad}
+            className="rounded border border-neutral-600 px-3 py-2 text-sm"
+          >
+            Load
+          </button>
+          <button
+            type="button"
+            onClick={doExport}
+            className="rounded border border-neutral-600 px-3 py-2 text-sm"
+          >
+            Export
+          </button>
+        </div>
+
+        {exportStatus ? (
+          <p role="status" className="mt-3 text-sm">
+            {exportStatus}
           </p>
-          <h1 className="mt-2 text-3xl" style={{ fontFamily: brand.fontHeading }}>
-            Employee data protection
-          </h1>
-        </header>
-
-        {/* ---- Select / export ---- */}
-        <Card style={panel}>
-          <CardHeader>
-            <CardTitle style={{ color: brand.primaryColor, fontFamily: brand.fontHeading }}>
-              Employee record
-            </CardTitle>
-            <CardDescription style={{ color: brand.neutralColor }}>
-              Load an employee by ID to export their data or action a deletion request.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form className="flex flex-wrap items-end gap-3" onSubmit={onLoad} noValidate>
-              <div className="min-w-[240px] flex-1">
-                <Label htmlFor="employee-id" style={label} className="block text-xs uppercase">
-                  Employee ID
-                </Label>
-                <Input
-                  id="employee-id"
-                  value={employeeId}
-                  onChange={(e) => setEmployeeId(e.target.value)}
-                  className="mt-2 w-full px-3 py-2"
-                  style={field}
-                />
-              </div>
-              <Button type="submit" disabled={recordState === "loading"}>
-                {recordState === "loading" ? "Loading…" : "Load"}
-              </Button>
-              <Button
-                type="button"
-                variant="secondary"
-                onClick={onExport}
-                disabled={exporting || !employeeId.trim()}
-              >
-                <Icons.Download className="h-4 w-4" aria-hidden="true" />
-                {exporting ? "Exporting…" : "Export"}
-              </Button>
-            </form>
-
-            {recordState === "error" && recordError ? (
-              <p role="alert" className="mt-4 text-sm" style={{ color: "#cf8171" }}>
-                {recordError}
-              </p>
-            ) : null}
-            {exportError ? (
-              <p role="alert" className="mt-4 text-sm" style={{ color: "#cf8171" }}>
-                {exportError}
-              </p>
-            ) : null}
-            {exportedFile ? (
-              <p role="status" className="mt-4 text-sm" style={{ color: brand.accentColor }}>
-                Downloaded {exportedFile}.
-              </p>
-            ) : null}
-
-            {recordState === "loading" && !employee ? (
-              <p className="mt-6 text-sm" style={{ color: brand.neutralColor }}>
-                Loading employee…
-              </p>
-            ) : employee ? (
-              <div className="mt-6" style={{ borderTop: HAIRLINE, paddingTop: 16 }}>
-                <Table>
-                  <THead>
-                    <TR>
-                      <TH>Name</TH>
-                      <TH>Email</TH>
-                      <TH>Role</TH>
-                      <TH>Status</TH>
-                    </TR>
-                  </THead>
-                  <TBody>
-                    <TR>
-                      <TD>{employee.name}</TD>
-                      <TD>{employee.email ?? "—"}</TD>
-                      <TD>{employee.role}</TD>
-                      <TD>
-                        {employee.anonymised_at ? (
-                          <Badge variant="warning">Anonymised</Badge>
-                        ) : employee.is_active ? (
-                          <Badge variant="success">Active</Badge>
-                        ) : (
-                          <Badge>Deactivated</Badge>
-                        )}
-                      </TD>
-                    </TR>
-                  </TBody>
-                </Table>
-              </div>
-            ) : (
-              <div className="mt-6">
-                <Empty
-                  title="No employee loaded"
-                  description="Enter an employee ID and load their record to continue."
-                />
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* ---- Delete personal data ---- */}
-        {employee ? (
-          <Card style={panel}>
-            <CardHeader>
-              <CardTitle style={{ color: brand.primaryColor, fontFamily: brand.fontHeading }}>
-                Delete personal data
-              </CardTitle>
-              <CardDescription style={{ color: brand.neutralColor }}>
-                Anonymises this employee's identifying fields. Goals and praise stay, attributed to
-                the reference only. This cannot be undone.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <form className="space-y-4" onSubmit={onDelete} noValidate>
-                <div>
-                  <Label htmlFor="delete-reason" style={label} className="block text-xs uppercase">
-                    Reason
-                  </Label>
-                  <Textarea
-                    id="delete-reason"
-                    value={reason}
-                    onChange={(e) => setReason(e.target.value)}
-                    className="mt-2 w-full px-3 py-2"
-                    style={field}
-                  />
-                </div>
-                <label
-                  className="flex items-center gap-2 text-sm"
-                  style={{ color: brand.primaryColor }}
-                >
-                  <input
-                    type="checkbox"
-                    checked={confirmDelete}
-                    onChange={(e) => setConfirmDelete(e.target.checked)}
-                  />
-                  I confirm this deletion is backed by an approved request.
-                </label>
-                {deleteError ? (
-                  <p role="alert" className="text-sm" style={{ color: "#cf8171" }}>
-                    {deleteError}
-                  </p>
-                ) : null}
-                {deleteDone ? (
-                  <p role="status" className="text-sm" style={{ color: brand.accentColor }}>
-                    Personal data deleted. The record now shows the anonymised state.
-                  </p>
-                ) : null}
-                <Button type="submit" variant="danger" disabled={deleting}>
-                  <Icons.Trash className="h-4 w-4" aria-hidden="true" />
-                  {deleting ? "Deleting…" : "Delete personal data"}
-                </Button>
-              </form>
-            </CardContent>
-          </Card>
+        ) : null}
+        {exportError ? (
+          <p role="alert" className="mt-3 text-sm text-red-400">
+            {exportError}
+          </p>
         ) : null}
 
-        {/* ---- Audit trail ---- */}
-        <Card style={panel}>
-          <CardHeader>
-            <CardTitle style={{ color: brand.primaryColor, fontFamily: brand.fontHeading }}>
-              Audit trail
-            </CardTitle>
-            <CardDescription style={{ color: brand.neutralColor }}>
-              Who did what, and when — newest first.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form
-              className="flex flex-wrap items-end gap-3"
-              onSubmit={onApplyAuditFilters}
-              noValidate
-            >
-              <div className="min-w-[200px]">
-                <Label htmlFor="audit-entity" style={label} className="block text-xs uppercase">
-                  Entity
-                </Label>
-                <Input
-                  id="audit-entity"
-                  value={entityFilter}
-                  onChange={(e) => setEntityFilter(e.target.value)}
-                  className="mt-2 w-full px-3 py-2"
-                  style={field}
-                />
-              </div>
-              <div className="min-w-[160px]">
-                <Label htmlFor="audit-from" style={label} className="block text-xs uppercase">
-                  From
-                </Label>
-                <Input
-                  id="audit-from"
-                  type="date"
-                  value={fromFilter}
-                  onChange={(e) => setFromFilter(e.target.value)}
-                  className="mt-2 w-full px-3 py-2"
-                  style={field}
-                />
-              </div>
-              <div className="min-w-[160px]">
-                <Label htmlFor="audit-to" style={label} className="block text-xs uppercase">
-                  To
-                </Label>
-                <Input
-                  id="audit-to"
-                  type="date"
-                  value={toFilter}
-                  onChange={(e) => setToFilter(e.target.value)}
-                  className="mt-2 w-full px-3 py-2"
-                  style={field}
-                />
-              </div>
-              <Button type="submit" disabled={auditState === "loading"}>
-                {auditState === "loading" ? "Loading…" : "Apply filters"}
-              </Button>
-            </form>
+        {employeeState === "none" ? (
+          <p className="mt-3 text-sm text-neutral-400">No employee loaded.</p>
+        ) : employeeState === "loading" ? (
+          <p className="mt-3 text-sm text-neutral-400">Loading employee…</p>
+        ) : employeeState === "error" ? (
+          <p role="alert" className="mt-3 text-sm text-red-400">
+            {employeeError}
+          </p>
+        ) : employeeState === "loaded" && employeeData ? (
+          <div className="mt-4 rounded border border-neutral-700 p-4">
+            <h3 className="text-base font-medium">{employeeData.employee.name}</h3>
+            <p className="mt-1 text-sm text-neutral-400">
+              {employeeStatusLabel(employeeData.employee)}
+            </p>
 
-            {auditState === "error" && auditError ? (
-              <p role="alert" className="mt-4 text-sm" style={{ color: "#cf8171" }}>
-                {auditError}
-              </p>
-            ) : null}
-
-            <div className="mt-6">
-              {auditState === "loading" ? (
-                <p className="text-sm" style={{ color: brand.neutralColor }}>
-                  Loading audit entries…
+            <div className="mt-4 space-y-3">
+              <div>
+                <label htmlFor="delete-reason" className="block text-xs uppercase tracking-wide">
+                  Reason
+                </label>
+                <input
+                  id="delete-reason"
+                  value={reason}
+                  onChange={(e) => {
+                    setReason(e.target.value);
+                    setDeleteError(null);
+                  }}
+                  className="mt-1 rounded border border-neutral-600 bg-neutral-900 px-3 py-2 text-sm"
+                />
+              </div>
+              <label htmlFor="confirm-delete" className="flex items-center gap-2 text-sm">
+                <input
+                  id="confirm-delete"
+                  type="checkbox"
+                  checked={confirmed}
+                  onChange={(e) => {
+                    setConfirmed(e.target.checked);
+                    setDeleteError(null);
+                  }}
+                />
+                I confirm this deletion
+              </label>
+              <button
+                type="button"
+                onClick={submitDelete}
+                disabled={deleting}
+                className="rounded border border-neutral-600 px-3 py-2 text-sm disabled:opacity-60"
+              >
+                Delete personal data
+              </button>
+              {deleteError ? (
+                <p role="alert" className="text-sm text-red-400">
+                  {deleteError}
                 </p>
-              ) : auditEntries === null ? (
-                <Empty
-                  title="No audit entries loaded"
-                  description="Apply filters to load the audit trail."
-                />
-              ) : auditEntries.length === 0 ? (
-                <Empty title="No audit entries" description="Nothing matches these filters." />
-              ) : (
-                <Table>
-                  <THead>
-                    <TR>
-                      <TH>When</TH>
-                      <TH>Who</TH>
-                      <TH>Entity</TH>
-                      <TH>Action</TH>
-                      <TH>Changes</TH>
-                    </TR>
-                  </THead>
-                  <TBody>
-                    {auditEntries.map((row) => (
-                      <TR key={row.id}>
-                        <TD>{row.created_at}</TD>
-                        <TD>{row.actor_name ?? "—"}</TD>
-                        <TD>{row.entity_type}</TD>
-                        <TD>{row.action}</TD>
-                        <TD>{fmtChanges(row.changes)}</TD>
-                      </TR>
-                    ))}
-                  </TBody>
-                </Table>
-              )}
+              ) : null}
             </div>
-          </CardContent>
-        </Card>
-      </div>
+          </div>
+        ) : null}
+      </section>
+
+      <section aria-label="Audit trail" className="mt-10">
+        <h2 className="text-lg font-medium">Audit trail</h2>
+
+        <div className="mt-3 flex flex-wrap items-end gap-3">
+          <div>
+            <label htmlFor="audit-entity" className="block text-xs uppercase tracking-wide">
+              Entity
+            </label>
+            <input
+              id="audit-entity"
+              value={auditEntity}
+              onChange={(e) => setAuditEntity(e.target.value)}
+              className="mt-1 rounded border border-neutral-600 bg-neutral-900 px-3 py-2 text-sm"
+            />
+          </div>
+          <div>
+            <label htmlFor="audit-from" className="block text-xs uppercase tracking-wide">
+              From
+            </label>
+            <input
+              id="audit-from"
+              value={auditFrom}
+              onChange={(e) => setAuditFrom(e.target.value)}
+              className="mt-1 rounded border border-neutral-600 bg-neutral-900 px-3 py-2 text-sm"
+            />
+          </div>
+          <div>
+            <label htmlFor="audit-to" className="block text-xs uppercase tracking-wide">
+              To
+            </label>
+            <input
+              id="audit-to"
+              value={auditTo}
+              onChange={(e) => setAuditTo(e.target.value)}
+              className="mt-1 rounded border border-neutral-600 bg-neutral-900 px-3 py-2 text-sm"
+            />
+          </div>
+          <button
+            type="button"
+            onClick={applyFilters}
+            className="rounded border border-neutral-600 px-3 py-2 text-sm"
+          >
+            Apply filters
+          </button>
+        </div>
+
+        {auditState === "none" ? (
+          <p className="mt-3 text-sm text-neutral-400">No audit entries loaded.</p>
+        ) : auditState === "loading" ? (
+          <p className="mt-3 text-sm text-neutral-400">Loading audit entries…</p>
+        ) : auditState === "error" ? (
+          <p role="alert" className="mt-3 text-sm text-red-400">
+            The audit trail could not be loaded. Try again.
+          </p>
+        ) : auditState === "empty" ? (
+          <p className="mt-3 text-sm text-neutral-400">No audit entries match these filters.</p>
+        ) : (
+          <table className="mt-3 w-full text-left text-sm">
+            <thead>
+              <tr>
+                <th className="pb-2 pr-3">When</th>
+                <th className="pb-2 pr-3">Actor</th>
+                <th className="pb-2 pr-3">Record</th>
+                <th className="pb-2 pr-3">Action</th>
+                <th className="pb-2">Changes</th>
+              </tr>
+            </thead>
+            <tbody>
+              {auditRows.map((row) => (
+                <tr key={row.id} className="border-t border-neutral-700">
+                  <td className="py-2 pr-3">{row.created_at}</td>
+                  <td className="py-2 pr-3">{row.actor_name}</td>
+                  <td className="py-2 pr-3">
+                    {row.entity_type} {row.entity_id}
+                  </td>
+                  <td className="py-2 pr-3">{row.action}</td>
+                  <td className="py-2">{row.changes ? JSON.stringify(row.changes) : "—"}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </section>
     </div>
   );
 }
